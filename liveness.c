@@ -51,6 +51,8 @@ static Temp_tempList except(Temp_tempList t1, Temp_tempList t2)
 // t1 U t2
 static Temp_tempList unionn(Temp_tempList t1, Temp_tempList t2)
 {
+  assert(t1);
+  assert(t2);
   printf("\n\tunion of :\n");
   Temp_printList(t1); Temp_printList(t2);
 

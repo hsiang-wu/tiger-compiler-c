@@ -63,7 +63,7 @@ static void FG_addJumps(TAB_table t, G_node n)
 
 static void printInsNode(void * ins)
 {
-  printf("kind %d ", ((AS_instr) ins)->kind)
+  printf("kind %d ", ((AS_instr) ins)->kind);
 }
 
 G_graph FG_AssemFlowGraph(AS_instrList il, F_frame f) {
@@ -95,7 +95,6 @@ G_graph FG_AssemFlowGraph(AS_instrList il, F_frame f) {
         if (((AS_instr) G_nodeInfo(curr))->kind == I_OPER) 
           FG_addJumps(label_tb, curr);
     }
-    G_show(stdout, G_nodes(g), NULL);
-    assert(0);
+    G_show(stdout, G_nodes(g), printInsNode);
 	return g;
 }
