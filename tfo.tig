@@ -1,0 +1,9 @@
+let
+    var a := 1
+in
+	for i := 0 to 2
+	do (
+        printi(i);
+        if i = 1 then
+            break)
+end
