@@ -127,3 +127,11 @@ void Temp_print(void *t)
 {
   printf("temp:%d\n", ((Temp_temp)t)->num);
 }
+
+void Temp_printList(Temp_tempList tl)
+{
+  if (!tl) printf("empty list\n");
+  for (; tl; tl=tl->tail) {
+    Temp_print(tl->head);
+  }
+}

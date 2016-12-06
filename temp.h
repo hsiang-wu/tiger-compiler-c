@@ -34,4 +34,5 @@ Temp_map Temp_name(void);
 /* used in liveness.c */
 Temp_tempList Temp_copyList(Temp_tempList tl);
 void Temp_print(void *);
+void Temp_printList(Temp_tempList);
 #endif

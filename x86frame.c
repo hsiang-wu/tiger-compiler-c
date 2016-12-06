@@ -161,3 +161,9 @@ T_exp F_externalCall(string str, T_expList args)
   return T_Call(T_Name(Temp_namedlabel(str)), args);
 }
 
+Temp_tempList F_registers()
+{
+
+  return NULL;
+}
+

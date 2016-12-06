@@ -1,4 +1,4 @@
-cscope 15 $HOME/Desktop/Compilers/handout_lab6b               0001930543
+cscope 15 $HOME/Desktop/Compilers/handout_lab6b               0001931808
 	@absyn.c
 
 6 
@@ -9387,11 +9387,27 @@ I_OPER
 cuº
 );
 
-93  
+93 
+	`G_show
+(
+°dout
+, 
+	`G_nodes
+(
+g
+), 
+NULL
+);
+
+94 
+	`as£π
+(0);
+
+95  
 g
 ;
 
-94 
+96 
 	}
 }
 
@@ -9707,6 +9723,12 @@ F_RV
 F_‰agLi°
  
 F_gëFøgLi°
+();
+
+50 
+Temp_ãmpLi°
+ 
+F_ªgi°îs
 ();
 
 	@graph.c
@@ -16634,6 +16656,18 @@ t2
 )
 
 54 
+	`¥ötf
+("\n\tunion of :\n");
+
+55 
+	`Temp_¥ötLi°
+(
+t1
+); Temp_¥ötLi°(
+t2
+);
+
+57 
 Temp_ãmpLi°
  
 r
@@ -16643,13 +16677,13 @@ r
 t1
 );
 
-55 ; 
+58 ; 
 t2
 ;Å2 =Å2->
 èû
 ) {
 
-56 i‡(!
+59 i‡(!
 	`öLi°
 (
 t1
@@ -16659,7 +16693,7 @@ t2
 hód
 ))
 
-57 
+60 
 r
  = 
 	`Temp_TempLi°
@@ -16669,15 +16703,25 @@ t2
 hód
 ,Ñ);
 
-59  
+63 
+	`¥ötf
+("\tunionÑesult :\n\n");
+
+64 
+	`Temp_¥ötLi°
+(
+r
+);
+
+66  
 r
 ;
 
-60 
+67 
 	}
 }
 
-62 
+69 
 Live_moveLi°
  
 	$Live_MoveLi°
@@ -16693,7 +16737,7 @@ Live_moveLi°
 èû
 ) {
 
-63 
+70 
 Live_moveLi°
  
 lm
@@ -16701,33 +16745,33 @@ lm
 	`checked_mÆloc
 ((*lm));
 
-64 
+71 
 lm
 ->
 §c
  = src;
 
-65 
+72 
 lm
 ->
 d°
  = dst;
 
-66 
+73 
 lm
 ->
 èû
  =Åail;
 
-67  
+74  
 lm
 ;
 
-68 
+75 
 	}
 }
 
-71 
+78 
 Temp_ãmp
  
 	$Live_gãmp
@@ -16737,15 +16781,19 @@ G_node
 n
 ) {
 
-73  
-NULL
-;
+80  (
+Temp_ãmp
+)
+	`G_nodeInfo
+(
+n
+);
 
-74 
+81 
 	}
 }
 
-82 
+89 
 	$¸óãInOutTabÀ
 (
 G_gøph
@@ -16759,13 +16807,13 @@ G_èbÀ
 out
 )
 
-84 
+91 
 	`as£π
 (
 Êow
 );
 
-85 
+92 
 G_nodeLi°
  
 ∆_c⁄°
@@ -16777,7 +16825,7 @@ G_nodeLi°
 ∆
 ;
 
-88 
+95 
 ∆
 =
 ∆_c⁄°
@@ -16785,7 +16833,7 @@ G_nodeLi°
 èû
 ) {
 
-89 
+96 
 	`G_íãr
 (
 ö
@@ -16797,7 +16845,7 @@ hód
 NULL
 );
 
-90 
+97 
 	`G_íãr
 (
 out
@@ -16809,19 +16857,19 @@ hód
 NULL
 );
 
-94 
+101 
 ∆
  = 
 ∆_c⁄°
 ;
 
-95 ; 
+102 ; 
 ∆
 ;Ç»∆->
 èû
 ) {
 
-98 
+105 
 Temp_ãmpLi°
  
 öé
@@ -16835,7 +16883,7 @@ Temp_ãmpLi°
 hód
 );
 
-99 
+106 
 Temp_ãmpLi°
  
 ouâl
@@ -16849,7 +16897,7 @@ out
 hód
 );
 
-100 
+107 
 Temp_ãmpLi°
  
 öé_d
@@ -16859,7 +16907,7 @@ Temp_ãmpLi°
 öé
 );
 
-101 
+108 
 Temp_ãmpLi°
  
 ouâl_d
@@ -16868,28 +16916,28 @@ ouâl_d
 (
 ouâl
 );
-
-102 
-	`as£π
-(
-	`equÆs
-(
-öé
-, 
-öé_d
-));
-
-103 
-	`as£π
-(
-	`equÆs
-(
-ouâl
-, 
-ouâl_d
-));
 
 109 
+	`as£π
+(
+	`equÆs
+(
+öé
+, 
+öé_d
+));
+
+110 
+	`as£π
+(
+	`equÆs
+(
+ouâl
+, 
+ouâl_d
+));
+
+116 
 öé
  = 
 	`uni⁄n
@@ -16907,7 +16955,7 @@ ouâl
 	`FG_def
 (nl->head)));
 
-110 
+117 
 	`G_íãr
 (
 ö
@@ -16919,7 +16967,7 @@ hód
 öé
 );
 
-116 
+123 
 G_nodeLi°
  
 succ
@@ -16931,13 +16979,13 @@ succ
 hód
 );
 
-118 ; 
+125 ; 
 succ
 ; suc¯succ->
 èû
 ) {
 
-119 
+126 
 ouâl
  = 
 	`uni⁄n
@@ -16953,7 +17001,7 @@ succ
 hód
 ));
 
-121 
+128 
 	`G_íãr
 (
 out
@@ -16965,7 +17013,19 @@ hód
 ouâl
 );
 
-126 i‡(
+130 
+	`Temp_¥ötLi°
+(
+öé
+);
+
+131 
+	`Temp_¥ötLi°
+(
+ouâl
+);
+
+135 i‡(
 	`equÆs
 (
 öé_d
@@ -16977,11 +17037,11 @@ ouâl
 ouâl_d
 ))
 
-130 
+139 
 	}
 }
 
-132 
+141 
 G_gøph
  
 	$öôItfGøph
@@ -16995,7 +17055,7 @@ TAB_èbÀ
 ãmpToNode
 )
 
-134 
+143 
 G_gøph
  
 g
@@ -17003,7 +17063,7 @@ g
 	`G_Gøph
 ();
 
-136 
+145 
 Temp_ãmpLi°
  
 ãmps
@@ -17011,13 +17071,13 @@ Temp_ãmpLi°
 NULL
 ;
 
-137 ; 
+146 ; 
 ∆
 ;Ç»∆->
 èû
 ) {
 
-138 
+147 
 ãmps
  = 
 	`uni⁄n
@@ -17031,13 +17091,13 @@ hód
 	`FG_u£
 (nl->head)));
 
-141 ; 
+150 ; 
 ãmps
 ;Åemp†ãmps->
 èû
 ) {
 
-142 
+151 
 G_node
  
 n
@@ -17051,7 +17111,7 @@ g
 hód
 );
 
-143 
+152 
 	`TAB_íãr
 (
 ãmpToNode
@@ -17063,15 +17123,23 @@ hód
 n
 );
 
-145  
+154  
 g
 ;
 
-146 
+155 
 	}
 }
 
-148 
+157 
+Live_moveLi°
+ 
+	gmoves
+ = 
+NULL
+;
+
+159 
 G_gøph
  
 	$öã„ªn˚Gøph
@@ -17082,12 +17150,10 @@ G_nodeLi°
 , 
 G_èbÀ
  
-ö
-, G_èbÀ 
-out
+liveM≠
 )
 
-154 
+165 
 TAB_èbÀ
  
 ãmpM≠
@@ -17095,7 +17161,7 @@ TAB_èbÀ
 	`TAB_em±y
 ();
 
-155 
+166 
 G_gøph
  
 g
@@ -17107,7 +17173,7 @@ g
 ãmpM≠
 );
 
-157 
+168 
 	`G_show
 (
 °dout
@@ -17119,13 +17185,13 @@ g
 Temp_¥öt
 );
 
-159 ; 
+170 ; 
 ∆
 ;Ç»∆->
 èû
 ) {
 
-164 
+171 
 AS_ö°r
  
 i
@@ -17137,13 +17203,13 @@ i
 hód
 );
 
-165 
+172 
 	`as£π
 (
 i
 );
 
-166 
+173 
 Temp_ãmpLi°
  
 defs
@@ -17155,67 +17221,21 @@ defs
 hód
 );
 
-168 ; 
-defs
-; def†defs->
-èû
-) {
-
-173 
+174 
 Temp_ãmpLi°
  
-ouéives
+liveouts
  = 
 	`G_look
 (
-out
+liveM≠
 , 
 ∆
 ->
 hód
 );
 
-175 ; 
-ouéives
-; ouéive†ouéives->
-èû
-) {
-
-180 
-G_node
- 
-a
- = (G_node)
-	`TAB_look
-(
-ãmpM≠Node
-, 
-defs
-->
-hód
-);
-
-181 
-G_node
- 
-b
- = (G_node)
-	`TAB_look
-(
-ãmpM≠Node
-, 
-ouéives
-->
-hód
-);
-
-185 i‡(
-a
- !
-b
-) {
-
-187 i‡(
+176 i‡(
 i
 ->
 köd
@@ -17223,10 +17243,10 @@ köd
 I_MOVE
 ) {
 
-188 
+177 
 Temp_ãmpLi°
  
-u£s
+§cs
  = 
 	`FG_u£
 (
@@ -17235,37 +17255,115 @@ u£s
 hód
 );
 
-190 ; 
-u£s
-; u£†u£s->
+178 
+	`as£π
+(
+defs
+->
 èû
-){
+ =
+NULL
+);
 
-191 
+179 
+	`as£π
+(
+§cs
+->
+èû
+ =
+NULL
+);
+
+181 
 G_node
  
-c
+d°
  = (G_node)
 	`TAB_look
 (
-ãmpM≠Node
+ãmpM≠
 , 
-u£s
+defs
 ->
 hód
 );
 
-192 i‡(
-b
- !
-c
-Ë
+182 
+G_node
+ 
+§c
+ = (G_node)
+	`TAB_look
+(
+ãmpM≠
+, 
+§cs
+->
+hód
+);
+
+184 
+	`Live_MoveLi°
+(
+d°
+, 
+§c
+, 
+moves
+);
+
+186 ; 
+liveouts
+;Üiveout†liveouts->
+èû
+) {
+
+188 
+G_node
+ 
+t
+ = (G_node)
+	`TAB_look
+(
+ãmpM≠
+, 
+liveouts
+->
+hód
+);
+
+190 i‡(
+d°
+ =
+t
+) ;
+
+191 i‡(
+liveouts
+->
+hód
+ =
+§cs
+->head) ;
+
+192 
 	`G_addEdge
 (
-a
-, b);
+d°
+, 
+t
+);
 
-195 } i‡(
+195 ; 
+defs
+; def†defs->
+èû
+) {
+
+196 
+	`as£π
+(
 i
 ->
 köd
@@ -17273,9 +17371,49 @@ köd
 I_OPER
  || i->köd =
 I_LABEL
+);
+
+198 
+G_node
+ 
+a
+ = (G_node)
+	`TAB_look
+(
+ãmpM≠
+, 
+defs
+->
+hód
+);
+
+199 ; 
+liveouts
+;Üiveout†liveouts->
+èû
 ) {
 
-197 
+200 
+G_node
+ 
+b
+ = (G_node)
+	`TAB_look
+(
+ãmpM≠
+, 
+liveouts
+->
+hód
+);
+
+202 i‡(
+a
+ =
+b
+) ;
+
+203 
 	`G_addEdge
 (
 a
@@ -17283,19 +17421,27 @@ a
 b
 );
 
-199 } 
-	`as£π
-(0);
+209 
+	`G_show
+(
+°dout
+, 
+	`G_nodes
+(
+g
+), 
+Temp_¥öt
+);
 
-204  
+210  
 g
 ;
 
-205 
+211 
 	}
 }
 
-208 
+214 
 Live_gøph
  
 	$Live_livíess
@@ -17305,13 +17451,13 @@ G_gøph
 Êow
 ) {
 
-210 
+216 
 Live_gøph
  
 lg
 ;
 
-212 
+218 
 G_èbÀ
  
 ö
@@ -17319,7 +17465,7 @@ G_èbÀ
 	`G_em±y
 ();
 
-213 
+219 
 G_èbÀ
  
 out
@@ -17327,7 +17473,7 @@ out
 	`G_em±y
 ();
 
-214 
+220 
 	`¸óãInOutTabÀ
 (
 Êow
@@ -17337,7 +17483,7 @@ out
 out
 );
 
-216 
+222 
 G_gøph
  
 g
@@ -17348,12 +17494,10 @@ g
 (
 Êow
 ), 
-ö
-, 
 out
 );
 
-218 
+223 
 lg
 .
 gøph
@@ -17361,11 +17505,17 @@ gøph
 g
 ;
 
-219  
+224 
+lg
+.
+moves
+ = moves;
+
+225  
 lg
 ;
 
-220 
+226 
 	}
 }
 
@@ -20764,7 +20914,7 @@ RA_ªsu…
 20 
 G_gøph
  
-gøph
+Êowgøph
  = 
 	`FG_As£mFlowGøph
 (
@@ -20773,11 +20923,51 @@ gøph
 f
 );
 
-21  
+21 
+Live_gøph
+ 
+livegøph
+ = 
+	`Live_livíess
+(
+Êowgøph
+);
+
+23 
+COL_ªsu…
+ 
+¸
+ = 
+	`COL_cﬁ‹
+(
+livegøph
+.
+gøph
+, 
+F_ãmpM≠
+, 
+	`F_ªgi°îs
+());
+
+25 
+ªt
+.
+cﬁ‹ög
+ = 
+¸
+.coloring;
+
+26 
+ªt
+.
+û
+ = il;
+
+27  
 ªt
 ;
 
-22 
+28 
 	}
 }
 
@@ -27769,6 +27959,58 @@ r
 	}
 }
 
+126 
+	$Temp_¥öt
+(*
+t
+)
+
+128 
+	`¥ötf
+("ãmp:%d\n", ((
+Temp_ãmp
+)
+t
+)->
+num
+);
+
+129 
+	}
+}
+
+131 
+	$Temp_¥ötLi°
+(
+Temp_ãmpLi°
+ 
+é
+)
+
+133 i‡(!
+é
+Ë
+	`¥ötf
+("emptyÜist\n");
+
+134 ; 
+é
+;ÅlÒl->
+èû
+) {
+
+135 
+	`Temp_¥öt
+(
+é
+->
+hód
+);
+
+137 
+	}
+}
+
 	@temp.h
 
 6 #i‚de‡
@@ -27965,9 +28207,13 @@ Temp_c›yLi°
 
 36 
 Temp_¥öt
+(*);
+
+37 
+Temp_¥ötLi°
 (
-Temp_ãmp
- );
+Temp_ãmpLi°
+);
 
 	@translate.c
 
@@ -34110,6 +34356,20 @@ T_expLi°
 );
 
 162 
+	}
+}
+
+164 
+Temp_ãmpLi°
+ 
+	$F_ªgi°îs
+()
+
+167  
+NULL
+;
+
+168 
 	}
 }
 

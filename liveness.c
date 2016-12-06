@@ -51,11 +51,18 @@ static Temp_tempList except(Temp_tempList t1, Temp_tempList t2)
 // t1 U t2
 static Temp_tempList unionn(Temp_tempList t1, Temp_tempList t2)
 {
+  printf("\n\tunion of :\n");
+  Temp_printList(t1); Temp_printList(t2);
+
   Temp_tempList r = Temp_copyList(t1);
   for (; t2; t2 = t2->tail) {
     if (!inList(t1, t2->head))
       r = Temp_TempList(t2->head, r);
   }
+
+  printf("\tunion result :\n\n");
+  Temp_printList(r);
+
   return r;
 }
 
@@ -120,6 +127,8 @@ static void createInOutTable(G_graph flow, G_table in, G_table out)
       } 
       G_enter(out, nl->head, outtl); // update out-table
 
+      Temp_printList(intl);
+      Temp_printList(outtl);
       /*
        * repeat until in = in1, out = out1
        */

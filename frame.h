@@ -46,5 +46,7 @@ Temp_temp F_RV();
 F_fragList F_getFragList();
 //F_frag F_procEntryExit(F_frame frame, T_stm stm);
 
+/* make it work */
+Temp_tempList F_registers();
 
 #endif
