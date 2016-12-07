@@ -28,7 +28,13 @@ Temp_tempList FG_use(G_node n) {
     assert(n && "Invalid n in FG_use");
     AS_instr i = G_nodeInfo(n);
     switch (i->kind) {
-      case I_OPER: return i->u.OPER.src;
+      case I_OPER: 
+        {
+          printf("call FG_use:\n");
+          Temp_printList(i->u.OPER.src);
+          printf("\n");
+          return i->u.OPER.src;
+        }
       case I_LABEL: return NULL;
       case I_MOVE: return i->u.MOVE.src;
     }
@@ -61,9 +67,35 @@ static void FG_addJumps(TAB_table t, G_node n)
   }
 }
 
-static void printInsNode(void * ins)
+static void printInsNode(void * p)
 {
-  printf("kind %d ", ((AS_instr) ins)->kind)
+  AS_instr i = p;
+  char *names[3] = {[I_OPER]="oper", [I_LABEL]="label", [I_MOVE]="move"};
+  printf("\n%s\n", names[i->kind]);
+
+    switch (i->kind) {
+      case I_LABEL: 
+        {
+          printf("%s\n", S_name(i->u.LABEL.label));
+          break;
+        }
+      case I_OPER: 
+        {
+          printf("FG_def:\n");
+          Temp_printList(i->u.OPER.dst);
+          printf("FG_use:\n");
+          Temp_printList(i->u.OPER.src);
+          break;
+        }
+      case I_MOVE: 
+        {
+          printf("(move)FG_def:\n");
+          Temp_printList(i->u.MOVE.dst);
+          printf("(move)FG_use:\n");
+          Temp_printList(i->u.MOVE.src);
+          break;
+        }
+    }
 }
 
 G_graph FG_AssemFlowGraph(AS_instrList il, F_frame f) {
@@ -95,7 +127,8 @@ G_graph FG_AssemFlowGraph(AS_instrList il, F_frame f) {
         if (((AS_instr) G_nodeInfo(curr))->kind == I_OPER) 
           FG_addJumps(label_tb, curr);
     }
-    G_show(stdout, G_nodes(g), NULL);
-    assert(0);
+    printf("flowgraph:\n");
+    G_show(stdout, G_nodes(g), printInsNode);
+    printf("end of flowgraph:\n");
 	return g;
 }

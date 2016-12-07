@@ -118,7 +118,7 @@ Temp_tempList Temp_copyList(Temp_tempList tl)
 {
   Temp_tempList r = NULL, last;
   for (; tl; tl = tl->tail) {
-    Temp_TempList(tl->head, r);
+    r = Temp_TempList(tl->head, r);
   }
   return r;
 }
@@ -130,7 +130,7 @@ void Temp_print(void *t)
 
 void Temp_printList(Temp_tempList tl)
 {
-  if (!tl) printf("empty list\n");
+  if (!tl) printf("-/-\n");
   for (; tl; tl=tl->tail) {
     Temp_print(tl->head);
   }

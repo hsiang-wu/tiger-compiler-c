@@ -40,6 +40,8 @@ static bool equals(Temp_tempList t1, Temp_tempList t2)
 // t1 - t2
 static Temp_tempList except(Temp_tempList t1, Temp_tempList t2)
 {
+  if (!t2) return t1;
+
   Temp_tempList r = NULL;
   for (; t1; t1 = t1->tail) {
     if (!inList(t2, t1->head))
@@ -51,17 +53,17 @@ static Temp_tempList except(Temp_tempList t1, Temp_tempList t2)
 // t1 U t2
 static Temp_tempList unionn(Temp_tempList t1, Temp_tempList t2)
 {
-  printf("\n\tunion of :\n");
-  Temp_printList(t1); Temp_printList(t2);
+  if (!t1) return t2;
 
   Temp_tempList r = Temp_copyList(t1);
+  // assert(equals(r, t1));
   for (; t2; t2 = t2->tail) {
-    if (!inList(t1, t2->head))
+    if (!t1 || !inList(t1, t2->head))
       r = Temp_TempList(t2->head, r);
   }
 
-  printf("\tunion result :\n\n");
-  Temp_printList(r);
+  //printf("union result :\n");
+  //Temp_printList(r);
 
   return r;
 }
@@ -96,9 +98,11 @@ static void createInOutTable(G_graph flow, G_table in, G_table out)
     G_enter(in, nl->head, NULL);
     G_enter(out, nl->head, NULL);
   }
-
-  while (1) {
+  
+  bool DONE=FALSE;
+  while (!DONE) {
     nl = nl_const;
+    DONE=TRUE;
     for (; nl; nl = nl->tail) {
 
       /* save in[n], out[n] */
@@ -127,13 +131,17 @@ static void createInOutTable(G_graph flow, G_table in, G_table out)
       } 
       G_enter(out, nl->head, outtl); // update out-table
 
+      printf("in:\n");
       Temp_printList(intl);
+      printf("out:\n");
       Temp_printList(outtl);
+      printf("end out\n");
       /*
        * repeat until in = in1, out = out1
        */
-      if (equals(intl_d, intl) && equals(outtl, outtl_d)) 
-        break;
+      if (!equals(intl_d, intl) || !equals(outtl, outtl_d)) {
+        DONE=FALSE;
+      }
     }
   }
 }
@@ -165,6 +173,7 @@ static G_graph inteferenceGraph(G_nodeList nl, G_table liveMap)
   TAB_table tempMap = TAB_empty(); // g only map node to temp. need a quick lookup for temp to node.
   G_graph g = initItfGraph(nl, tempMap);
 
+  printf("inteferenceGraph:\n");
   G_show(stdout, G_nodes(g), Temp_print); // debug
 
   for (; nl; nl = nl->tail) {
@@ -206,6 +215,7 @@ static G_graph inteferenceGraph(G_nodeList nl, G_table liveMap)
     }
   }
 
+  printf("inteferenceGraph:\n");
   G_show(stdout, G_nodes(g), Temp_print); // debug
   return g;
 }
@@ -215,6 +225,7 @@ struct Live_graph Live_liveness(G_graph flow) {
 	//your code here.
 	struct Live_graph lg;
 
+    printf("start. liveness\n");
     G_table in = G_empty();
     G_table out = G_empty();
     createInOutTable(flow, in, out); /* solution of data-flow */
