@@ -1,4 +1,4 @@
-cscope 15 $HOME/Desktop/Compilers/handout_lab6b               0001934447
+cscope 15 $HOME/Desktop/Compilers/handout_lab6b               0001934744
 	@absyn.c
 
 6 
@@ -7971,7 +7971,7 @@ G_node
 	$p›Insig
 (
 G_nodeLi°
- 
+ *
 ∆
 , 
 K
@@ -7989,18 +7989,22 @@ G_nodeLi°
 œ°
  = 
 NULL
+, 
+∆l
+=*
+∆
 ;
 
 20 ; 
-∆
-;ÇlÚl->
+∆l
+;ÇŒÚŒ->
 èû
 ) {
 
 21 i‡(
 	`G_degªe
 (
-∆
+∆l
 ->
 hód
 Ë< 
@@ -8012,7 +8016,7 @@ G_node
  
 tmp
  = 
-∆
+∆l
 ->
 hód
 ;
@@ -8026,38 +8030,76 @@ hód
 ->
 èû
  = 
-∆
+∆l
 ->tail;
 
-26 
+26 *
 ∆
- =Çl->
+ = (*∆)->
 èû
 ;
 
-28  
+28 
+	`¥ötf
+("a·îÖ›Çode: %s\n", (*
+∆
+)?"":"empty");
+
+29 i‡(*
+∆
+Ë
+	`G_show
+(
+°dout
+, *∆, 
+Temp_¥öt
+);
+
+30 
+	`¥ötf
+("%s\n", 
+tmp
+?"":"em±yÅmp"); 
+	`Temp_¥öt
+(tmp);
+
+31  
 tmp
 ;
 
-30 
+33 
 œ°
  = 
-∆
+∆l
 ;
 
-32 
+35 
+	`¥ötf
+("remainÇode:\n");
+
+36 
+	`G_show
+(
+°dout
+, *
+∆
+, 
+Temp_¥öt
+);
+
+37 
 	`as£π
 (0 && "NEED TO IMPLEMENT SPILL");
 
-33 
+38 
 	}
 }
 
-35 
+40 
 	$push_°ack
 (
 G_nodeLi°
- 
+ *
 °ack
 , 
 G_node
@@ -8065,53 +8107,53 @@ G_node
 t
 )
 
-37 
+42 *
 °ack
  = 
 	`G_NodeLi°
 (
 t
-, stack);
+, *stack);
 
-38 
+43 
 	}
 }
 
-40 
+45 
 G_node
  
 	$p›_°ack
 (
 G_nodeLi°
- 
+ *
 °ack
 )
 
-42 
+47 
 G_node
  
 t
- = 
+ = (*
 °ack
-->
+)->
 hód
 ;
 
-43 
+48 *
 °ack
- = sèck->
+ = (*°ack)->
 èû
 ;
 
-44  
+49  
 t
 ;
 
-45 
+50 
 	}
 }
 
-48 
+53 
 G_nodeLi°
  
 	$c›y_nodes
@@ -8121,7 +8163,7 @@ G_nodeLi°
 ∆
 )
 
-50 
+55 
 G_nodeLi°
  
 ∆dup
@@ -8129,13 +8171,13 @@ G_nodeLi°
 NULL
 ;
 
-51 ; 
+56 ; 
 ∆
 ;ÇlÚl->
 èû
 ) {
 
-52 
+57 
 ∆dup
  = 
 	`G_NodeLi°
@@ -8145,15 +8187,15 @@ NULL
 hód
 ,Çldup);
 
-54  
+59  
 ∆dup
 ;
 
-55 
+60 
 	}
 }
 
-57 
+62 
 COL_ªsu…
  
 	$COL_cﬁ‹
@@ -8171,17 +8213,17 @@ Temp_ãmpLi°
 ªgs
 ) {
 
-59 
+64 
 COL_ªsu…
  
 ªt
 ;
 
-62 
+67 
 K
  = 0;
 
-63 ;
+68 ;
 ªgs
 ;ªgsÙegs->
 èû
@@ -8189,7 +8231,17 @@ K
 K
 ++;
 
-65 
+70 
+K
+=6;
+
+71 
+	`¥ötf
+("K=%d\n", 
+K
+);
+
+73 
 G_nodeLi°
  
 °ack
@@ -8197,7 +8249,7 @@ G_nodeLi°
 NULL
 ;
 
-67 
+75 
 G_nodeLi°
  
 ∆
@@ -8207,57 +8259,57 @@ G_nodeLi°
 ig
 );
 
-68 
+76 
 ∆
  = 
 	`c›y_nodes
 (nl);
 
-70 
+78 
 ∆
 ) {
 
-71 
+79 
 G_node
  
 n
  = 
 	`p›Insig
-(
+(&
 ∆
 , 
 K
 );
 
-73 
+81 
 	`push_°ack
-(
+(&
 °ack
 , 
 n
 );
 
-77 
+85 
 °rög
  
 cﬁ‹s
-[6] = {"%%eax", "%%ebx", "%%ecx", "%%edx", "%%edi", "%%ebi"};
+[6] = {"%eax", "%ebx", "%ecx", "%edx", "%edi", "%ebi"};
 
-79 
+87 
 °ack
 ) {
 
-80 
+88 
 G_node
  
 n
  = 
 	`p›_°ack
-(
+(&
 °ack
 );
 
-82 
+90 
 G_nodeLi°
  
 adj
@@ -8267,7 +8319,7 @@ adj
 n
 );
 
-83 
+91 
 TAB_èbÀ
  
 adjcﬁ‹s
@@ -8275,13 +8327,13 @@ adjcﬁ‹s
 	`TAB_em±y
 ();
 
-84 ; 
+92 ; 
 adj
 ;ádj˜dj->
 èû
 ) {
 
-85 
+93 
 °rög
  
 cﬁ‹
@@ -8297,13 +8349,11 @@ adj
 hód
 ));
 
-86 i‡–
-	`°æí
-(
+94 i‡–
 cﬁ‹
-) != 0 ) {
+ ) {
 
-87 
+95 
 	`TAB_íãr
 (
 adjcﬁ‹s
@@ -8311,15 +8361,15 @@ adjcﬁ‹s
 cﬁ‹
 , (*)1);
 
-92 
+100 
 i
  = 0;
 
-93 ; 
+101 ; 
 i
  < 6; i++) {
 
-94 i‡(!
+102 i‡(!
 	`TAB_look
 (
 adjcﬁ‹s
@@ -8329,7 +8379,7 @@ cﬁ‹s
 i
 ])) {
 
-95 
+103 
 	`Temp_íãr
 (
 öôül
@@ -8343,7 +8393,7 @@ cﬁ‹s
 i
 ]);
 
-101 
+109 
 ªt
 .
 cﬁ‹ög
@@ -8351,7 +8401,7 @@ cﬁ‹ög
 öôül
 ;
 
-102 
+110 
 ªt
 .
 •ûls
@@ -8359,11 +8409,11 @@ cﬁ‹ög
 NULL
 ;
 
-104 
+112 
 	`¥ötf
 ("dump coloring map:\n");
 
-105 
+113 
 	`Temp_dumpM≠
 (
 °dout
@@ -8373,11 +8423,11 @@ NULL
 cﬁ‹ög
 );
 
-106  
+114  
 ªt
 ;
 
-107 
+115 
 	}
 }
 
@@ -18347,7 +18397,7 @@ iLi°
 	`Ârötf
 (
 out
-, "BEGIN function\n");
+, "#BEGIN function\n");
 
 45 
 	`AS_¥ötIn°rLi°
@@ -18371,7 +18421,7 @@ cﬁ‹ög
 	`Ârötf
 (
 out
-, "END function\n\n");
+, "#END function\n\n");
 
 49 
 	}
