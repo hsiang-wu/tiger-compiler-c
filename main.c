@@ -36,15 +36,20 @@ static void doProc(FILE *out, F_frame frame, T_stm body)
 
  stmList = C_linearize(body);
  stmList = C_traceSchedule(C_basicBlocks(stmList));
- /* printStmList(stdout, stmList);*/
+
+ printStmList(stdout, stmList);
+
  iList  = F_codegen(frame, stmList); /* 9 */
 
  struct RA_result ra = RA_regAlloc(frame, iList);  /* 10, 11 */
 
  fprintf(out, "#BEGIN function\n");
- AS_printInstrList (out, iList,
+ proc = F_procEntryExit3(frame, iList);
+ fprintf(out, "%s", proc->prolog);
+ AS_printInstrList (out, proc->body,
                        Temp_layerMap(F_tempMap,ra.coloring)); // uncomment this to continue
 //                       Temp_layerMap(F_tempMap,Temp_name())); // for debug
+ fprintf(out, "%s", proc->epilog);
  fprintf(out, "#END function\n\n");
 }
 

@@ -34,7 +34,10 @@ static void emit(AS_instr inst)
 AS_instrList F_codegen(F_frame f, T_stmList stmList) {
   AS_instrList list; T_stmList s1;
 
-  Temp_enter(F_tempMap, F_RV(), "%%eax");
+  Temp_enter(F_tempMap, F_RV(), "%eax");
+  Temp_enter(F_tempMap, F_FP(), "%ebp");
+  Temp_enter(F_tempMap, F_SP(), "%esp");
+
   for (s1 = stmList; s1; s1 = s1->tail) munchStm(s1->head);
   list = iList;
   iList = last = NULL;

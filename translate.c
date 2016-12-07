@@ -265,6 +265,17 @@ Tr_exp Tr_constVar(int i)
   return Tr_Ex(T_Const(i));
 }
 
+// return the start of the (new) list
+static Tr_expList Tr_expListAppend(Tr_expList el, Tr_exp e)
+{
+  if (!el) return Tr_ExpList(e, NULL);
+
+  Tr_expList hd = el;
+  for (; el->tail; el=el->tail) ;
+  el->tail = Tr_ExpList(e, NULL);
+  return hd;
+}
+
 Tr_exp Tr_callExp(Temp_label label, Tr_level fun, Tr_level call, Tr_expList el_reversed) 
 {
   int i = 0;
@@ -279,7 +290,8 @@ Tr_exp Tr_callExp(Temp_label label, Tr_level fun, Tr_level call, Tr_expList el_r
 
   T_expList args = NULL;
   Tr_exp sl = Tr_StaticLink(call, fun);
-  el_reversed = Tr_ExpList(sl, el_reversed);
+
+  el_reversed = Tr_expListAppend(el_reversed, sl); // sl at the reversed end = the start.
   args = Tr_expList_convert(el_reversed); // it's all reversed. so actually (somehow) static link is the last para.
   //return Tr_Ex(T_Eseq(T_Move(T_Temp(F_RV()), T_Call(T_Name(label), args)), 
   //     T_Temp(F_RV())));

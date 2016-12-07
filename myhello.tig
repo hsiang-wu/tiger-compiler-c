@@ -1,1 +1,7 @@
-printi(1)
+let
+    function g(a:int, b:int, c:int, d:int) : int =
+        (a+b+c+d)
+in
+    printi(g(1,2,3,4))
+end
+    

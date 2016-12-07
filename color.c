@@ -12,14 +12,26 @@
 
 #include "string.h"
 
-static G_node popInsig(G_nodeList *nl, int K)
+static G_node popInsig(G_nodeList *nl, int K, TAB_table degree)
 {
   if (!nl) return NULL;
 
   G_nodeList last = NULL, nll=*nl;
-  for (; nll; nll=nll->tail) {
-    if (G_degree(nll->head) < K) {
+  for (nll=*nl; nll; nll=nll->tail) {
+    int d;
+    d = (int) TAB_look(degree, nll->head);
+    printf("node:%p.degree:%d\n", nll->head, d);
+    if (d < K) {
       G_node tmp = nll->head;
+      G_nodeList adjs;
+      for (adjs=G_adj(tmp); adjs; adjs=adjs->tail) {
+        printf("node:"); Temp_print(G_nodeInfo(nll->head));
+        printf("degree:%d\n===\n", TAB_look(degree, adjs->head));
+        TAB_enter(degree, adjs->head, TAB_look(degree, adjs->head)-1);
+        printf("node:"); Temp_print(G_nodeInfo(nll->head));
+        printf("degree:%d\n===\n", TAB_look(degree, adjs->head));
+      }
+
       if (last) { // remove this node
         last->tail = nll->tail;
       } else {
@@ -27,8 +39,11 @@ static G_node popInsig(G_nodeList *nl, int K)
       }
       printf("after pop node: %s\n", (*nl)?"":"empty");
       if (*nl) G_show(stdout, *nl, Temp_print);
-      printf("%s\n", tmp?"":"empty tmp"); Temp_print(tmp);
+      printf("pop. degree %d %s\n", d, tmp?"":"empty tmp"); Temp_print(G_nodeInfo(tmp));
       return tmp;
+    } else {
+      printf("degree %d,", d);
+      Temp_print(G_nodeInfo(nll->head));
     }
     last = nll;
   }
@@ -59,6 +74,17 @@ static G_nodeList copy_nodes(G_nodeList nl)
   return nldup;
 }
 
+static TAB_table degreeTable(G_nodeList nl)
+{
+  TAB_table degree = TAB_empty(); // because we can't rmEdge(don't know how to store.. we build a virtual degree: node-int map
+
+  for (;nl;nl=nl->tail) {
+    TAB_enter(degree, nl->head, (void *) G_degree(nl->head));
+    printf("node:%p.degree:%d\n", nl->head, G_degree(nl->head));
+  }
+  return degree;
+}
+
 struct COL_result COL_color(G_graph ig, Temp_map initial, Temp_tempList regs) {
 	//your code here.
 	struct COL_result ret;
@@ -75,8 +101,9 @@ struct COL_result COL_color(G_graph ig, Temp_map initial, Temp_tempList regs) {
     G_nodeList nl = G_nodes(ig);
     nl = copy_nodes(nl); // so it won't affect the graph
     
+    TAB_table degree = degreeTable(nl);
     while (nl) {
-      G_node n = popInsig(&nl, K); // pop a insignaficant(degree < K) node from graph
+      G_node n = popInsig(&nl, K, degree); // pop a insignaficant(degree < K) node from graph
       
       push_stack(&stack, n);
     }
@@ -97,10 +124,13 @@ struct COL_result COL_color(G_graph ig, Temp_map initial, Temp_tempList regs) {
       }
 
       // assign a color
+      if (Temp_look(initial, G_nodeInfo(n))) continue; // already have a color.(i.e. %eax of idive)
+
       int i = 0;
       for (; i < 6; i++) {
         if (!TAB_look(adjcolors, colors[i])) {
           Temp_enter(initial, G_nodeInfo(n), colors[i]);
+          break;
         }
       }
     }

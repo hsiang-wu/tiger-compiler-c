@@ -28,13 +28,7 @@ Temp_tempList FG_use(G_node n) {
     assert(n && "Invalid n in FG_use");
     AS_instr i = G_nodeInfo(n);
     switch (i->kind) {
-      case I_OPER: 
-        {
-          //printf("call FG_use:\n");
-          //Temp_printList(i->u.OPER.src);
-          //printf("\n");
-          return i->u.OPER.src;
-        }
+      case I_OPER: { return i->u.OPER.src; }
       case I_LABEL: return NULL;
       case I_MOVE: return i->u.MOVE.src;
     }

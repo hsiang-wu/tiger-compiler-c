@@ -50,7 +50,6 @@ F_fragList F_getFragList();
 /* make it work */
 Temp_tempList F_registers();
 Temp_temp F_SP(void);
-Temp_temp F_ZERO(void);
 Temp_temp F_RA(void);
 Temp_temp F_RV(void);
 F_frag F_newProcFrag(T_stm body, F_frame frame);

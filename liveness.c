@@ -197,19 +197,25 @@ static G_graph inteferenceGraph(G_nodeList nl, G_table liveMap)
         G_node t = (G_node)TAB_look(tempMap, liveouts->head);
 
         if (dst == t) continue;
-        if (liveouts->head == srcs->head) continue; // don't have to add
+
+        // TODO:
+        // We don't have to add next edge if we did coalescing.
+        // currently we skip it so I comment it out.
+        // when doing coalescing, uncomment next line.
+        // if (liveouts->head == srcs->head) continue;   
+
         G_addEdge(dst, t);
       }
     } else {
       for (; defs; defs = defs->tail) {
         assert(i->kind == I_OPER || i->kind == I_LABEL);
 
-        G_node a = (G_node)TAB_look(tempMap, defs->head);
+        G_node dst = (G_node)TAB_look(tempMap, defs->head);
         for (; liveouts; liveouts = liveouts->tail) { 
-          G_node b = (G_node)TAB_look(tempMap, liveouts->head);
+          G_node t = (G_node)TAB_look(tempMap, liveouts->head);
 
-          if (a == b) continue;
-          G_addEdge(a, b);
+          if (dst == t) continue;
+          G_addEdge(dst, t);
         }
       } 
     }

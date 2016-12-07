@@ -80,7 +80,7 @@ F_frame F_newFrame(Temp_label name, U_boolList formals)
 {
   F_frame frame = checked_malloc(sizeof(*frame));
   frame->name = name;
-  frame->off = 0;
+  frame->off = 4;
 
   if (!formals) return frame; // only happens in outermost
 
@@ -97,7 +97,7 @@ F_frame F_newFrame(Temp_label name, U_boolList formals)
   al->head = F_allocParam(frame, formals->head);
   al->tail = NULL;
   frame->accessList = head;
-  frame->off = 0; // set back to 0, cuz it's > ebp but local vars lives < ebp
+  frame->off = 0; // set to -4, cuz it's > ebp but local vars lives < ebp. and -4(%ebp) is %esp.
   return frame;
 }
 
@@ -194,4 +194,18 @@ F_frag F_string(Temp_label lab, string lit)
     sprintf(s, ".string \"%d%s\"\n", (int) strlen(lit), lit);
     frg->u.stringg.str = s;
 	return frg;
+}
+
+AS_proc F_procEntryExit3(F_frame frame, AS_instrList body)
+{
+  AS_proc proc = checked_malloc(sizeof(*proc));
+  assert(body->head->kind == I_LABEL);
+  string fname = body->head->u.LABEL.assem;
+  char *r = checked_malloc(64);
+  sprintf(r, "%s\tpushl\t%%ebp\n\tmovl\t%%esp, %%ebp\n", fname);
+  proc->prolog = r;
+  body = body->tail;
+  proc->body = body;
+  proc->epilog = "\tleave\n\tret\n";
+  return proc;
 }
