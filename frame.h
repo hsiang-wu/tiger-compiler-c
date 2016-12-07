@@ -4,6 +4,8 @@
 #ifndef FRAME_H
 #define FRAME_H
 
+#include "assem.h"
+
 typedef struct F_frame_ *F_frame;
 typedef struct F_access_ *F_access;
 
@@ -39,7 +41,6 @@ F_fragList F_FragList(F_frag head, F_fragList tail);
 Temp_temp F_FP(void);
 extern const int F_wordSize;
 T_exp F_Exp(F_access acc, T_exp framePtr);
-T_exp F_string(Temp_label lab, string lit);
 T_exp F_externalCall(string, T_expList);
 Temp_temp F_RV();
 
@@ -48,5 +49,13 @@ F_fragList F_getFragList();
 
 /* make it work */
 Temp_tempList F_registers();
+Temp_temp F_SP(void);
+Temp_temp F_ZERO(void);
+Temp_temp F_RA(void);
+Temp_temp F_RV(void);
+F_frag F_newProcFrag(T_stm body, F_frame frame);
+T_stm F_procEntryExit2(AS_instrList body);
+AS_proc F_procEntryExit3(F_frame frame, AS_instrList body);
+F_frag F_string(Temp_label lab, string lit);
 
 #endif

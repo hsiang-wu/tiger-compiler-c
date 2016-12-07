@@ -75,11 +75,24 @@ int main(int argc, string *argv)
    sprintf(outfile, "%s.s", argv[1]);
    out = fopen(outfile, "w");
    /* Chapter 8, 9, 10, 11 & 12 */
-   for (;frags;frags=frags->tail)
-     if (frags->head->kind == F_procFrag) 
+   for (;frags;frags=frags->tail) {
+     if (frags->head->kind == F_procFrag) {
+       static int head = 1;
+       if (head) { 
+         fprintf(out, ".text\n"); 
+          fprintf(out, ".global tigermain\n");
+          fprintf(out, ".type tigermain, @function\n");
+         head = 0; }
+
        doProc(out, frags->head->u.proc.frame, frags->head->u.proc.body);
-     else if (frags->head->kind == F_stringFrag) 
-       fprintf(out, "%s\n", frags->head->u.stringg.str);
+     } else if (frags->head->kind == F_stringFrag) {
+       static int head = 1; 
+       if (head) { fprintf(out, ".section .rodata\n"); head = 0; }
+
+       F_frag f = F_string(frags->head->u.stringg.label, frags->head->u.stringg.str);
+       fprintf(out, "%s:\n%s\n", S_name(f->u.stringg.label), f->u.stringg.str);
+     }
+   }
 
    fclose(out);
    return 0;

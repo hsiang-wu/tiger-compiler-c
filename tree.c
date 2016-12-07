@@ -63,6 +63,13 @@ T_stm T_Exp(T_exp exp)
  p->u.EXP=exp;
  return p;
 }
+
+T_stm T_Push(T_exp exp)
+{T_stm p = (T_stm) checked_malloc(sizeof *p);
+ p->kind=T_PUSH;
+ p->u.PUSH=exp;
+ return p;
+}
  
 T_exp T_Binop(T_binOp op, T_exp left, T_exp right)
 {T_exp p = (T_exp) checked_malloc(sizeof *p);

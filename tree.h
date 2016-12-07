@@ -19,7 +19,7 @@ typedef enum  {T_eq, T_ne, T_lt, T_gt, T_le, T_ge,
 		T_ult, T_ule, T_ugt, T_uge} T_relOp;
 
 struct T_stm_ {enum {T_SEQ, T_LABEL, T_JUMP, T_CJUMP, T_MOVE,
-		       T_EXP} kind;
+		       T_EXP, T_PUSH} kind; // mychange : add T_PUSH for x86
 	       union {struct {T_stm left, right;} SEQ;
 		      Temp_label LABEL;
 		      struct {T_exp exp; Temp_labelList jumps;} JUMP;
@@ -27,6 +27,7 @@ struct T_stm_ {enum {T_SEQ, T_LABEL, T_JUMP, T_CJUMP, T_MOVE,
 			      Temp_label true, false;} CJUMP;
 		      struct {T_exp dst, src;} MOVE;
 		      T_exp EXP;
+              T_exp PUSH; // push a register value to stack
 		    } u;
 	     };
 
@@ -52,6 +53,7 @@ T_stm T_Cjump(T_relOp op, T_exp left, T_exp right,
 	      Temp_label true, Temp_label false);
 T_stm T_Move(T_exp, T_exp);
 T_stm T_Exp(T_exp);
+T_stm T_Push(T_exp);
 
 T_exp T_Binop(T_binOp, T_exp, T_exp);
 T_exp T_Mem(T_exp);

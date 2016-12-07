@@ -94,7 +94,7 @@ struct expty transExp(S_table venv, S_table tenv, A_exp a, Tr_level level, Tr_ex
         case A_callExp:
           {
             E_enventry et = S_look(venv, a->u.call.func);
-            dprintf(" call! look in %p [%s:%p]\n", venv, S_name(a->u.call.func), et);
+            printf(" call! look in %p [%s:%p]\n", venv, S_name(a->u.call.func), et);
             if (et == NULL || et->kind != E_funEntry) {
               EM_error(a->pos, "undefined function %s", S_name(a->u.call.func));
               return expTy(Tr_constVar(0), Ty_Nil());
