@@ -190,8 +190,14 @@ F_frag F_string(Temp_label lab, string lit)
     F_frag frg = checked_malloc(sizeof(*frg));
     frg->kind = F_stringFrag;
     frg->u.stringg.label = lab;
-    string s = checked_malloc(strlen(lit) + 20);
-    sprintf(s, ".string \"%d%s\"\n", (int) strlen(lit), lit);
+
+    string s = checked_malloc(strlen(lit) + 4);
+    *(int *) s = (int) strlen(lit);
+    //printf("len:%d\n", *(int*)s);
+    //*(int *) (s+4) = (int) strlen(lit);
+    strcpy(s+4, lit);
+
+    //fwrite(s, 1, strlen(lit)+4, stdout);
     frg->u.stringg.str = s;
 	return frg;
 }

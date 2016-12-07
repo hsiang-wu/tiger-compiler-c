@@ -95,7 +95,10 @@ int main(int argc, string *argv)
        if (head) { fprintf(out, ".section .rodata\n"); head = 0; }
 
        F_frag f = F_string(frags->head->u.stringg.label, frags->head->u.stringg.str);
-       fprintf(out, "%s:\n%s\n", S_name(f->u.stringg.label), f->u.stringg.str);
+       fprintf(out, "%s:\n.string \"", S_name(f->u.stringg.label));
+       int len = *(int*)f->u.stringg.str;
+       fwrite(f->u.stringg.str, 1, len+4, out);
+       fprintf(out, "\"\n");
      }
    }
 

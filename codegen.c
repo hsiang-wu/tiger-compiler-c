@@ -131,7 +131,7 @@ static Temp_temp munchExp(T_exp e)
 
               buffer = checked_malloc(64);
               sprintf(buffer, "\tsubl\t`s0, `d0\n");
-              emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), NULL), NULL));
+              emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), L(r, NULL)), NULL));
               return r; 
             }
           case T_mul :
@@ -141,7 +141,7 @@ static Temp_temp munchExp(T_exp e)
 
               buffer = checked_malloc(64);
               sprintf(buffer, "\timull\t`s0, `d0\n");
-              emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), NULL), NULL));
+              emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), L(r, NULL)), NULL));
               return r; 
             }
           case T_div :
@@ -158,7 +158,7 @@ static Temp_temp munchExp(T_exp e)
 
               buffer = checked_malloc(64);
               sprintf(buffer, "\tidiv\t`s0\n");
-              AS_instr debug = AS_Oper(buffer, NULL, L(munchExp(rt), NULL), NULL);
+              AS_instr debug = AS_Oper(buffer, NULL, L(munchExp(rt), L(r, NULL)), NULL);
               emit(debug);
               return r; // result in %eax
             }
