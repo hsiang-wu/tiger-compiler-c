@@ -131,11 +131,11 @@ static void createInOutTable(G_graph flow, G_table in, G_table out)
       } 
       G_enter(out, nl->head, outtl); // update out-table
 
-      printf("in:\n");
-      Temp_printList(intl);
-      printf("out:\n");
-      Temp_printList(outtl);
-      printf("end out\n");
+      //printf("in:\n");
+      //Temp_printList(intl);
+      //printf("out:\n");
+      //Temp_printList(outtl);
+      //printf("end out\n");
       /*
        * repeat until in = in1, out = out1
        */

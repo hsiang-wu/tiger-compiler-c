@@ -9,6 +9,10 @@
 #include "frame.h"
 #include "translate.h"
 
+#include <string.h>
+
+extern char *externalCallNames[]; // in env.c
+
 static T_expList Tr_expList_convert(Tr_expList l);
 static Tr_exp Tr_StaticLink(Tr_level now, Tr_level def);
 struct Tr_access_ {
@@ -87,7 +91,7 @@ Tr_level Tr_outermost(void)
   static Tr_level outermost = NULL;
   if (outermost == NULL) {
     outermost = checked_malloc(sizeof(*outermost));
-    Temp_label label = S_Symbol("_outermost");
+    Temp_label label = S_Symbol("tigermain");
     outermost->label = label;
     outermost->frame = F_newFrame(label, NULL);
   }
@@ -263,6 +267,16 @@ Tr_exp Tr_constVar(int i)
 
 Tr_exp Tr_callExp(Temp_label label, Tr_level fun, Tr_level call, Tr_expList el_reversed) 
 {
+  int i = 0;
+  for (; strcmp(externalCallNames[i], ""); i ++) {
+    if (strcmp(S_name(label), externalCallNames[i]) == 0) {
+      T_expList args = NULL;
+      args = Tr_expList_convert(el_reversed); // it's all reversed. so actually (somehow) static link is the last para.
+
+      return Tr_Ex(F_externalCall(externalCallNames[i], args));
+    }
+  }
+
   T_expList args = NULL;
   Tr_exp sl = Tr_StaticLink(call, fun);
   el_reversed = Tr_ExpList(sl, el_reversed);

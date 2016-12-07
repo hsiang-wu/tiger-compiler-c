@@ -14,6 +14,11 @@
 
 //Lab 6: your code here
 
+static Temp_temp munchExp(T_exp e);
+static void munchStm(T_stm s);
+static Temp_tempList munchArgs(int i, T_expList args);
+static void emit(AS_instr inst);
+
 extern Temp_map F_tempMap;
 
 Temp_tempList L(Temp_temp h, Temp_tempList t) {return Temp_TempList(h, t);}
@@ -29,6 +34,7 @@ static void emit(AS_instr inst)
 AS_instrList F_codegen(F_frame f, T_stmList stmList) {
   AS_instrList list; T_stmList s1;
 
+  Temp_enter(F_tempMap, F_RV(), "%%eax");
   for (s1 = stmList; s1; s1 = s1->tail) munchStm(s1->head);
   list = iList;
   iList = last = NULL;
@@ -137,7 +143,7 @@ static Temp_temp munchExp(T_exp e)
           case T_div :
             {
               // idiv S: eax <- [edx:eax] / S. ignore edx
-              //Temp_enter(F_tempMap, r, "%%eax");
+              Temp_enter(F_tempMap, r, "%%eax");
 
               sprintf(buffer, "\tmovl\t`s0, `d0\n");
               emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), NULL), NULL));
@@ -178,9 +184,10 @@ static Temp_temp munchExp(T_exp e)
       {
         assert(e->u.CALL.fun->kind == T_NAME); // we always call by name...(e.g. never "call *%eax")
         Temp_tempList l = munchArgs(0, e->u.CALL.args);
+
         sprintf(buffer, "\tcall\t%s\n", Temp_labelstring(e->u.CALL.fun->u.NAME));
         emit(AS_Oper(buffer, L(F_RV(), NULL), l, NULL));
-        return r;
+        return F_RV();
       }
 
     case T_ESEQ: // cano promised no eseq
@@ -190,7 +197,13 @@ static Temp_temp munchExp(T_exp e)
 
 static Temp_tempList munchArgs(int i, T_expList args)
 {
-  return NULL;
+  if (!args) return NULL;
+  // we receive a args of reversed order, so just printit here. i=0 for argsN, i=N for args0
+  char *buffer = checked_malloc(64);
+  sprintf(buffer, "\tpush\t`s0\n");
+  emit(AS_Oper(buffer, NULL, L(munchExp(args->head), NULL), NULL));
+
+  return munchArgs(i+1, args->tail);
 }
 
 
@@ -308,6 +321,7 @@ static void munchStm(T_stm s)
         return;
       }
     case T_SEQ:
-      assert(0);
+    case T_PUSH:
+      assert(0 && "Should be no T_PUSH or T_SEQ");
   }
 }

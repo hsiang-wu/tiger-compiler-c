@@ -2,6 +2,8 @@
  * assem.h - Function prototypes to translate to Assem-instructions
  *             using Maximal Munch.
  */
+#ifndef ASSEM_H
+#define ASSEM_H
 
 typedef struct {Temp_labelList labels;} *AS_targets;
 AS_targets AS_Targets(Temp_labelList labels);
@@ -36,3 +38,4 @@ struct AS_proc_ {
 };
 
 AS_proc AS_Proc(string p, AS_instrList b, string e);
+#endif

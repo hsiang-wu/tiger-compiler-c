@@ -30,9 +30,9 @@ Temp_tempList FG_use(G_node n) {
     switch (i->kind) {
       case I_OPER: 
         {
-          printf("call FG_use:\n");
-          Temp_printList(i->u.OPER.src);
-          printf("\n");
+          //printf("call FG_use:\n");
+          //Temp_printList(i->u.OPER.src);
+          //printf("\n");
           return i->u.OPER.src;
         }
       case I_LABEL: return NULL;

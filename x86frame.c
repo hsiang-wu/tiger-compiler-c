@@ -146,6 +146,14 @@ Temp_temp F_RV(void)
   return fp;
 }
 
+Temp_temp F_SP(void)
+{
+  static Temp_temp sp = NULL;
+  if (sp == NULL)
+    sp = Temp_newtemp();
+  return sp;
+}
+
 T_exp F_Exp(F_access acc, T_exp framePtr)
 {
   if (acc->kind == inFrame) {
@@ -158,6 +166,16 @@ T_exp F_Exp(F_access acc, T_exp framePtr)
 
 T_exp F_externalCall(string str, T_expList args)
 {
+
+  //T_stm passparam = NULL;
+  //for (; args; args=args->tail) { // reverse the reverse. a stack shuold be arg3..arg2..arg1..eip..ebp
+  //  if (!passparam) {
+  //    passparam = T_Push(args->head);
+  //  } else {
+  //    passparam = T_Seq(passparam, T_Push(args->head));
+  //  }
+  //}
+
   return T_Call(T_Name(Temp_namedlabel(str)), args);
 }
 
@@ -167,3 +185,13 @@ Temp_tempList F_registers()
   return NULL;
 }
 
+F_frag F_string(Temp_label lab, string lit)
+{
+    F_frag frg = checked_malloc(sizeof(*frg));
+    frg->kind = F_stringFrag;
+    frg->u.stringg.label = lab;
+    string s = checked_malloc(strlen(lit) + 20);
+    sprintf(s, ".string \"%d%s\"\n", (int) strlen(lit), lit);
+    frg->u.stringg.str = s;
+	return frg;
+}
