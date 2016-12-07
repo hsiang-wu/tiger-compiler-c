@@ -82,7 +82,7 @@ struct COL_result COL_color(G_graph ig, Temp_map initial, Temp_tempList regs) {
     }
 
 
-    static string colors[6] = {"%eax", "%ebx", "%ecx", "%edx", "%edi", "%ebi"};
+    static string colors[6] = {"%eax", "%ebx", "%ecx", "%edx", "%esi", "%edi"};
 
     while (stack) {
       G_node n = pop_stack(&stack);
