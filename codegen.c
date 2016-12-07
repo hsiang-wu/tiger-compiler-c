@@ -117,7 +117,8 @@ static Temp_temp munchExp(T_exp e)
 
                 buffer = checked_malloc(64);
                 sprintf(buffer, "\taddl\t`s0, `d0\n");
-                emit(AS_Oper(buffer, L(r, NULL), L(munchExp(rt), NULL), NULL));
+                emit(AS_Oper(buffer, L(r, NULL), L(munchExp(rt), L(r, NULL)), NULL)); 
+                // the second src is strange: x := x+1, x still in "in"
                 return r; 
               }
               assert(0);

@@ -182,33 +182,33 @@ static G_graph inteferenceGraph(G_nodeList nl, G_table liveMap)
     Temp_tempList defs = FG_def(nl->head);
     Temp_tempList liveouts = G_look(liveMap, nl->head);
 
-    if (i->kind == I_MOVE) {
-      Temp_tempList srcs = FG_use(nl->head);
-      assert(defs->tail == NULL); // our move instruction only have 1 def.
-      assert(srcs->tail == NULL); // and from 1 reg.
+    //if (i->kind == I_MOVE) {
+    //  Temp_tempList srcs = FG_use(nl->head);
+    //  assert(defs->tail == NULL); // our move instruction only have 1 def.
+    //  assert(srcs->tail == NULL); // and from 1 reg.
 
-      G_node dst = (G_node)TAB_look(tempMap, defs->head);
-      G_node src = (G_node)TAB_look(tempMap, srcs->head);
+    //  G_node dst = (G_node)TAB_look(tempMap, defs->head);
+    //  G_node src = (G_node)TAB_look(tempMap, srcs->head);
 
-      Live_MoveList(dst, src, moves); // add to movelist
+    //  Live_MoveList(dst, src, moves); // add to movelist
 
-      for (; liveouts; liveouts = liveouts->tail) { 
-        // look which node by map temp -> node
-        G_node t = (G_node)TAB_look(tempMap, liveouts->head);
+    //  for (; liveouts; liveouts = liveouts->tail) { 
+    //    // look which node by map temp -> node
+    //    G_node t = (G_node)TAB_look(tempMap, liveouts->head);
 
-        if (dst == t) continue;
+    //    if (dst == t) continue;
 
-        // TODO:
-        // We don't have to add next edge if we did coalescing.
-        // currently we skip it so I comment it out.
-        // when doing coalescing, uncomment next line.
-        // if (liveouts->head == srcs->head) continue;   
+    //    // TODO:
+    //    // We don't have to add next edge if we did coalescing.
+    //    // currently we skip it so I comment it out.
+    //    // when doing coalescing, uncomment next line.
+    //    // if (liveouts->head == srcs->head) continue;   
 
-        G_addEdge(dst, t);
-      }
-    } else {
+    //    G_addEdge(dst, t);
+    //  }
+    //} else {
       for (; defs; defs = defs->tail) {
-        assert(i->kind == I_OPER || i->kind == I_LABEL);
+     //   assert(i->kind == I_OPER || i->kind == I_LABEL);
 
         G_node dst = (G_node)TAB_look(tempMap, defs->head);
         for (; liveouts; liveouts = liveouts->tail) { 
@@ -217,8 +217,8 @@ static G_graph inteferenceGraph(G_nodeList nl, G_table liveMap)
           if (dst == t) continue;
           G_addEdge(dst, t);
         }
-      } 
-    }
+      }
+    //}
   }
 
   printf("inteferenceGraph:\n");

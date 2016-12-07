@@ -121,8 +121,8 @@ G_graph FG_AssemFlowGraph(AS_instrList il, F_frame f) {
         if (((AS_instr) G_nodeInfo(curr))->kind == I_OPER) 
           FG_addJumps(label_tb, curr);
     }
-    printf("flowgraph:\n");
-    G_show(stdout, G_nodes(g), printInsNode);
-    printf("end of flowgraph:\n");
+    //  printf("flowgraph:\n");
+    //  G_show(stdout, G_nodes(g), printInsNode);
+    //  printf("end of flowgraph:\n");
 	return g;
 }

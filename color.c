@@ -20,16 +20,11 @@ static G_node popInsig(G_nodeList *nl, int K, TAB_table degree)
   for (nll=*nl; nll; nll=nll->tail) {
     int d;
     d = (int) TAB_look(degree, nll->head);
-    printf("node:%p.degree:%d\n", nll->head, d);
     if (d < K) {
       G_node tmp = nll->head;
       G_nodeList adjs;
       for (adjs=G_adj(tmp); adjs; adjs=adjs->tail) {
-        printf("node:"); Temp_print(G_nodeInfo(nll->head));
-        printf("degree:%d\n===\n", TAB_look(degree, adjs->head));
         TAB_enter(degree, adjs->head, TAB_look(degree, adjs->head)-1);
-        printf("node:"); Temp_print(G_nodeInfo(nll->head));
-        printf("degree:%d\n===\n", TAB_look(degree, adjs->head));
       }
 
       if (last) { // remove this node
@@ -37,18 +32,14 @@ static G_node popInsig(G_nodeList *nl, int K, TAB_table degree)
       } else {
         *nl = (*nl)->tail;
       }
-      printf("after pop node: %s\n", (*nl)?"":"empty");
       if (*nl) G_show(stdout, *nl, Temp_print);
-      printf("pop. degree %d %s\n", d, tmp?"":"empty tmp"); Temp_print(G_nodeInfo(tmp));
       return tmp;
     } else {
-      printf("degree %d,", d);
-      Temp_print(G_nodeInfo(nll->head));
+      //printf("degree %d,", d);
+      //Temp_print(G_nodeInfo(nll->head));
     }
     last = nll;
   }
-  printf("remain node:\n");
-  G_show(stdout, *nl, Temp_print);
   assert(0 && "NEED TO IMPLEMENT SPILL");
 }
 
