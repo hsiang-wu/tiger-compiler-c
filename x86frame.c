@@ -208,7 +208,7 @@ AS_proc F_procEntryExit3(F_frame frame, AS_instrList body)
   assert(body->head->kind == I_LABEL);
   string fname = body->head->u.LABEL.assem;
   char *r = checked_malloc(64);
-  sprintf(r, "%s\tpushl\t%%ebp\n\tmovl\t%%esp, %%ebp\n", fname);
+  sprintf(r, "%s pushl\t%%ebp\n movl\t%%esp, %%ebp\n subl $64, %%esp\n", fname);
   proc->prolog = r;
   body = body->tail;
   proc->body = body;

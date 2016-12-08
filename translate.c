@@ -220,9 +220,11 @@ static struct Cx unCx(Tr_exp e)
   switch (e->kind) {
     case Tr_ex:
       {
-        Temp_label t = Temp_newlabel(), f = Temp_newlabel(); 
-        return unCx(Tr_Cx(PatchList(&t, NULL), PatchList(&f, NULL), 
-                      T_Cjump(T_ne, e->u.ex, T_Const(0), t, f)));
+        //Temp_label t = Temp_newlabel(), f = Temp_newlabel(); 
+        T_stm cj = T_Cjump(T_ne, e->u.ex, T_Const(0), NULL, NULL);
+        return unCx(Tr_Cx(PatchList(&(cj->u.CJUMP.true), NULL), 
+              PatchList(&cj->u.CJUMP.false, NULL), 
+                      cj));
       }
     case Tr_cx: 
       {
@@ -341,7 +343,7 @@ Tr_exp Tr_recordExp(Tr_expList el_reversed) {
   }
   /*alloc len * WORD-SIZE mem*/
   *alloc = T_Move(T_Temp(r),
-                   F_externalCall(String("initRecord"), T_ExpList(T_Const(i * F_wordSize), NULL)));
+                   F_externalCall("allocRecord", T_ExpList(T_Const(i * F_wordSize), NULL)));
 
   return Tr_Ex(T_Eseq(seq, T_Temp(r)));
 }
@@ -407,7 +409,7 @@ Tr_exp Tr_nilExp() {
     nilTemp = Temp_newtemp(); // so we can compare nil
     /* XXX */
     T_stm alloc = T_Move(T_Temp(nilTemp),
-                     F_externalCall(String("initRecord"), T_ExpList(T_Const(0), NULL)));
+                     F_externalCall("allocRecord", T_ExpList(T_Const(0), NULL)));
     return Tr_Ex(T_Eseq(alloc, T_Temp(nilTemp)));
   } else {
     return Tr_Ex(T_Temp(nilTemp));
@@ -417,12 +419,17 @@ Tr_exp Tr_nilExp() {
 Tr_exp Tr_whileExp(Tr_exp test, Tr_exp body, Tr_exp done) 
 {
   Temp_label testl = Temp_newlabel(), bodyl = Temp_newlabel();
-  return Tr_Ex(T_Eseq(T_Jump(T_Name(testl), Temp_LabelList(testl, NULL)), 
-                T_Eseq(T_Label(bodyl),
-                 T_Eseq(unNx(body),
-                      T_Eseq(T_Label(testl),
-                             T_Eseq(T_Cjump(T_eq, unEx(test), T_Const(0), unEx(done)->u.NAME, bodyl),
-                                T_Eseq(T_Label(unEx(done)->u.NAME), T_Const(0))))))));
+  
+  T_exp whilee = T_Eseq(T_Jump(T_Name(testl), Temp_LabelList(testl, NULL)), 
+      T_Eseq(T_Label(bodyl), 
+        T_Eseq(unNx(body), 
+          T_Eseq(T_Label(testl), 
+            T_Eseq(T_Cjump(T_eq, unEx(test), T_Const(0), 
+                unEx(done)->u.NAME, bodyl), 
+              T_Eseq(T_Label(unEx(done)->u.NAME), T_Const(0)))))));
+  //printf("whileexp\n");
+  //printStmList(stdout, T_StmList(T_Exp(whilee), NULL));
+  return Tr_Ex(whilee);
 }
 
 Tr_exp Tr_doneExp() 
@@ -439,19 +446,33 @@ Tr_exp Tr_forExp(Tr_exp lo, Tr_exp hi, Tr_exp body, Tr_exp done)
 
 Tr_exp Tr_ifExp(Tr_exp cond, Tr_exp then, Tr_exp elsee)
 {
-  unCx(cond);
+  // special case for const
+  if (cond->u.ex->kind == T_CONST) {
+    if (cond->u.ex->u.CONST) {
+      return Tr_Ex(unEx(then));
+    } else {
+      return Tr_Ex(unEx(elsee));
+    }
+  }
 
-  Temp_temp r = Temp_newtemp();
-  Temp_label t = Temp_newlabel();
-  Temp_label f = Temp_newlabel();
   struct Cx condcx = unCx(cond);
+  Temp_temp r      = Temp_newtemp();
+  Temp_label t     = Temp_newlabel();
+  Temp_label f     = Temp_newlabel();
+  Temp_label join  = Temp_newlabel();
+  T_stm jmp2join   = T_Jump(T_Name(join), Temp_LabelList(join, NULL));
   doPatch(condcx.trues, t);
   doPatch(condcx.falses, f);
-  return Tr_Ex(T_Eseq(T_Move(T_Temp(r),unEx(then)),
+  return Tr_Ex(
           T_Eseq(condcx.stm,
             T_Eseq(T_Label(f), 
               T_Eseq(T_Move(T_Temp(r), unEx(elsee)),
-                  T_Eseq(T_Label(t), T_Temp(r)))))));
+                T_Eseq(jmp2join, 
+                  T_Eseq(T_Label(t), 
+                    T_Eseq(T_Move(T_Temp(r),unEx(then)),
+                      T_Eseq(jmp2join,
+                        T_Eseq(T_Label(join), 
+                          T_Temp(r))))))))));
 }
 
 static F_fragList fragList = NULL;
@@ -463,6 +484,7 @@ void Tr_procEntryExit(Tr_level level, Tr_exp body) {
   //printf("p %d\n", ++debug_proc_count);
   // move the value of body to RV(return value register)
   T_stm procstm = F_procEntryExit1(level->frame, T_Move(T_Temp(F_RV()), unEx(body)));
+  printStmList(stdout, T_StmList(procstm, NULL));
   fragList = F_FragList(F_ProcFrag(procstm, level->frame), fragList);
 }
 

@@ -21,6 +21,7 @@ F_fragList SEM_transProg(A_exp exp)
   Tr_procEntryExit(out, et.exp);
   F_fragList resl = Tr_getFragList();
   dprintf("resl : %p %p\n", resl, resl->tail);
+
   return resl;
 }
 
@@ -245,6 +246,7 @@ err_ret:
                     done/* tell break where to jump */);
             if (body.ty != Ty_Void() && body.ty != Ty_Nil())
               EM_error(a->pos, "while body must produce no value");
+
             return expTy(Tr_whileExp(test.exp, body.exp, done), Ty_Void());
           }
         case A_forExp:
@@ -254,20 +256,24 @@ err_ret:
             // rewrite for grammer in while.
             // XXX: malfunctioned when limit = maxint
             // or when the name "_limit" is used in program
+            A_var cntvar = A_SimpleVar(0, a->u.forr.var);
+            A_exp cntexp = A_VarExp(0, cntvar);
             A_exp translated = A_LetExp(0, 
                 A_DecList(A_VarDec(0, a->u.forr.var, S_Symbol("int"), a->u.forr.lo),
                   A_DecList(A_VarDec(0, S_Symbol("_limit"), 
                       S_Symbol("int"), a->u.forr.hi), NULL)),
-                A_WhileExp(0, A_OpExp(0, A_ltOp, 
-                      A_VarExp(0, A_SimpleVar(0, a->u.forr.var)),
-                      A_VarExp(0, A_SimpleVar(0, S_Symbol("_limit")))),
-                    A_SeqExp(0, A_ExpList(a->u.forr.body,
-                        A_ExpList(
+                A_WhileExp(0, 
+                  A_OpExp(0, A_ltOp, 
+                    cntexp, 
+                    A_VarExp(0, A_SimpleVar(0, S_Symbol("_limit")))), 
+                  A_SeqExp(0, A_ExpList(a->u.forr.body, 
+                      A_ExpList(A_AssignExp(0, 
+                          cntvar, 
                           A_OpExp(0, A_plusOp, 
-                            A_VarExp(0, A_SimpleVar(0, a->u.forr.var)), 
-                            A_IntExp(0, 1)), 
-                          /* make while produce no value */
-                          A_ExpList(A_NilExp(0), NULL))))));
+                            cntexp, 
+                            A_IntExp(0, 1))), 
+                        /* make while produce no value */
+                        A_ExpList(A_NilExp(0), NULL))))));
             return transExp(venv, tenv, translated, level, brk);
 
 

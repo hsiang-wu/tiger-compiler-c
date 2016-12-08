@@ -174,8 +174,8 @@ static G_graph inteferenceGraph(G_nodeList nl, G_table liveMap)
   TAB_table tempMap = TAB_empty(); // g only map node to temp. need a quick lookup for temp to node.
   G_graph g = initItfGraph(nl, tempMap);
 
-  printf("inteferenceGraph:\n");
-  G_show(stdout, G_nodes(g), Temp_print); // debug
+  // printf("inteferenceGraph:\n");
+  // G_show(stdout, G_nodes(g), Temp_print); // debug
 
   for (; nl; nl = nl->tail) {
     AS_instr i = (AS_instr)G_nodeInfo(nl->head);
@@ -222,8 +222,8 @@ static G_graph inteferenceGraph(G_nodeList nl, G_table liveMap)
     //}
   }
 
-  printf("inteferenceGraph:\n");
-  G_show(stdout, G_nodes(g), Temp_print); // debug
+  // printf("inteferenceGraph:\n");
+  // G_show(stdout, G_nodes(g), Temp_print); // debug
   return g;
 }
 

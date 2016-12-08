@@ -1,8 +1,21 @@
 let
-    var b:int := 1
-    function g(a:int, b:int, c:int, d:int) : int =
-        (a+b+c+d)
+        var i:int := 0
+        var N:int := 8
+        function w() =
+                (while (i < N)
+                     do (i := i+1; printi(i) ))
+        function f() =
+        (for j := 1 to N-1
+              do  printi(j)
+                )
+
+	function printb() = 
+	(for i := 0 to 1-N
+		do (printi(i);for j := 0 to N
+			do print(if i > j then "x" else "y");
+			print("\n"));
+	print("\n"))
 in
-    printi(g(1,2,3,4));printi(b);printi(2)
+        f();printb()
 end
     

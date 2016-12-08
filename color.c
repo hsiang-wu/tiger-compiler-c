@@ -32,7 +32,7 @@ static G_node popInsig(G_nodeList *nl, int K, TAB_table degree)
       } else {
         *nl = (*nl)->tail;
       }
-      if (*nl) G_show(stdout, *nl, Temp_print);
+      // if (*nl) G_show(stdout, *nl, Temp_print);
       return tmp;
     } else {
       //printf("degree %d,", d);
@@ -71,7 +71,7 @@ static TAB_table degreeTable(G_nodeList nl)
 
   for (;nl;nl=nl->tail) {
     TAB_enter(degree, nl->head, (void *) G_degree(nl->head));
-    printf("node:%p.degree:%d\n", nl->head, G_degree(nl->head));
+    // printf("node:%p.degree:%d\n", nl->head, G_degree(nl->head));
   }
   return degree;
 }

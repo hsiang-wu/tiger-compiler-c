@@ -127,12 +127,14 @@ static Temp_temp munchExp(T_exp e)
           case T_minus : 
             {
               // subl %s1, %s2 : s2 = s2 - s1
-              sprintf(buffer, "\tmovl\t`s0, `d0\n");
-              emit(AS_Oper(buffer, L(r, NULL), L(munchExp(rt), NULL), NULL));
+              Temp_temp l = munchExp(lt);
+              Temp_temp r = munchExp(rt);
+              // sprintf(buffer, "\tmovl\t`s0, `d0\n");
+              // emit(AS_Oper(buffer, L(r, NULL), L(munchExp(rt), NULL), NULL));
 
-              buffer = checked_malloc(BLEN);
-              sprintf(buffer, "\tsubl\t`s0, `d0\n");
-              emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), L(r, NULL)), NULL));
+              // buffer = checked_malloc(BLEN);
+              sprintf(buffer, "\tsubl\t`s1, `s0\n");
+              emit(AS_Oper(buffer, L(l, NULL), L(r, L(l, NULL)), NULL));
               return r; 
             }
           case T_mul :
@@ -148,7 +150,7 @@ static Temp_temp munchExp(T_exp e)
           case T_div :
             {
               // idiv S: eax <- [edx:eax] / S. ignore edx
-              Temp_enter(F_tempMap, r, "%%eax");
+              Temp_enter(F_tempMap, r, "%eax");
 
               sprintf(buffer, "\tmovl\t`s0, `d0\n");
               emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), NULL), NULL));
