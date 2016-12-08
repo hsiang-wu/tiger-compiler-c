@@ -115,7 +115,7 @@ struct COL_result COL_color(G_graph ig, Temp_map initial, Temp_tempList regs) {
       }
 
       // assign a color
-      if (Temp_look(initial, G_nodeInfo(n))) continue; // already have a color.(i.e. %eax of idive)
+      if (Temp_look(initial, G_nodeInfo(n))) continue; // already have a color.(i.e. %eax of idiv)
 
       int i = 0;
       for (; i < 6; i++) {

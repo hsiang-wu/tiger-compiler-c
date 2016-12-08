@@ -263,7 +263,7 @@ err_ret:
                   A_DecList(A_VarDec(0, S_Symbol("_limit"), 
                       S_Symbol("int"), a->u.forr.hi), NULL)),
                 A_WhileExp(0, 
-                  A_OpExp(0, A_ltOp, 
+                  A_OpExp(0, A_leOp, 
                     cntexp, 
                     A_VarExp(0, A_SimpleVar(0, S_Symbol("_limit")))), 
                   A_SeqExp(0, A_ExpList(a->u.forr.body, 

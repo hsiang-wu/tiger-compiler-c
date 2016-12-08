@@ -124,9 +124,47 @@ F_fragList F_FragList(F_frag head, F_fragList tail) {
 	return fl;
 }
 
+#define REG_NUMS 6
+#define regbody static Temp_temp r = NULL;\
+  if (!r) r = Temp_newtemp();\
+  return r;
+
+static Temp_temp eax() { regbody; }
+static Temp_temp ebx() { regbody; }
+static Temp_temp ecx() { regbody; }
+static Temp_temp edx() { regbody; }
+static Temp_temp esi() { regbody; }
+static Temp_temp edi() { regbody; }
+
+Temp_tempList F_registers()
+{
+  static string colors[REG_NUMS] = {"%eax", "%ebx", "%ecx", "%edx", "%esi", "%edi"};
+  static Temp_tempList regs = NULL;
+  if (!regs) {
+    regs = Temp_TempList(eax(), regs);
+    regs = Temp_TempList(ebx(), regs);
+    regs = Temp_TempList(ecx(), regs);
+    regs = Temp_TempList(edx(), regs);
+    regs = Temp_TempList(esi(), regs);
+    regs = Temp_TempList(edi(), regs);
+
+    Temp_enter(F_tempMap, eax(), "%eax");
+    Temp_enter(F_tempMap, ebx(), "%ebx");
+    Temp_enter(F_tempMap, ecx(), "%ecx");
+    Temp_enter(F_tempMap, edx(), "%edx");
+    Temp_enter(F_tempMap, esi(), "%esi");
+    Temp_enter(F_tempMap, edi(), "%edi");
+  }
+  return regs;
+}
+
 T_stm F_procEntryExit1(F_frame frame, T_stm stm)
 {
   assert(frame->name);
+  F_allocLocal(frame, TRUE); // place callee-save registers
+  F_allocLocal(frame, TRUE); // place callee-save registers
+  F_allocLocal(frame, TRUE); // place callee-save registers
+  T_Move()
   return T_Seq(T_Label(frame->name), stm);
 }
 
@@ -177,12 +215,6 @@ T_exp F_externalCall(string str, T_expList args)
   //}
 
   return T_Call(T_Name(Temp_namedlabel(str)), args);
-}
-
-Temp_tempList F_registers()
-{
-
-  return NULL;
 }
 
 F_frag F_string(Temp_label lab, string lit)
