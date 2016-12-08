@@ -189,10 +189,17 @@ err_ret:
 
             if (el == NULL)
               return expTy(Tr_nilExp(), Ty_Void());
+
+            Tr_expList seq = NULL;
+            struct expty et;
             for (;el->tail != NULL; el=el->tail) {
-              transExp(venv, tenv, el->head, level, brk);
+              et = transExp(venv, tenv, el->head, level, brk);
+              seq = Tr_ExpList(et.exp, seq); // in reversed order.
             }
-            return transExp(venv, tenv, el->head, level, brk);
+            et = transExp(venv, tenv, el->head, level, brk);
+            seq = Tr_ExpList(et.exp, seq);
+            return expTy(Tr_seqExp(seq), et.ty);
+            //return et;
           }
         case A_assignExp:
           {
