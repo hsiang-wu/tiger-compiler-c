@@ -9,13 +9,7 @@ let
               do  printi(j)
                 )
 
-	function printb() = 
-	(for i := 0 to 1-N
-		do (printi(i);for j := 0 to N
-			do print(if i > j then "x" else "y");
-			print("\n"));
-	print("\n"))
 in
-        f();printb()
+        f();
 end
     

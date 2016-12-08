@@ -126,15 +126,16 @@ static Temp_temp munchExp(T_exp e)
             }
           case T_minus : 
             {
+              // r = s1 - s2
               // subl %s1, %s2 : s2 = s2 - s1
-              Temp_temp l = munchExp(lt);
-              Temp_temp r = munchExp(rt);
-              // sprintf(buffer, "\tmovl\t`s0, `d0\n");
-              // emit(AS_Oper(buffer, L(r, NULL), L(munchExp(rt), NULL), NULL));
+              // Temp_temp l = munchExp(lt);
+              // Temp_temp r = munchExp(rt);
+              sprintf(buffer, "\tmovl\t`s0, `d0\n");
+              emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), NULL), NULL));
 
-              // buffer = checked_malloc(BLEN);
-              sprintf(buffer, "\tsubl\t`s1, `s0\n");
-              emit(AS_Oper(buffer, L(l, NULL), L(r, L(l, NULL)), NULL));
+              buffer = checked_malloc(BLEN);
+              sprintf(buffer, "\tsubl\t`s0, `d0\n");
+              emit(AS_Oper(buffer, L(r, NULL), L(munchExp(rt), L(r, NULL)), NULL));
               return r; 
             }
           case T_mul :
