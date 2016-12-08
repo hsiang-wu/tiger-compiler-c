@@ -191,7 +191,7 @@ F_frag F_string(Temp_label lab, string lit)
     frg->kind = F_stringFrag;
     frg->u.stringg.label = lab;
 
-    string s = checked_malloc(strlen(lit) + 4);
+    string s = checked_malloc(strlen(lit) + 5); // 4 for int, 1 for '\0'
     *(int *) s = (int) strlen(lit);
     //printf("len:%d\n", *(int*)s);
     //*(int *) (s+4) = (int) strlen(lit);

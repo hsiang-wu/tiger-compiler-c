@@ -13,6 +13,7 @@
 #include "table.h"
 
 //Lab 6: your code here
+#define BLEN 32 // buffer length
 
 static Temp_temp munchExp(T_exp e);
 static void munchStm(T_stm s);
@@ -47,7 +48,7 @@ AS_instrList F_codegen(F_frame f, T_stmList stmList) {
 
 static Temp_temp munchExp(T_exp e)
 {
-  char *buffer = checked_malloc(64);
+  char *buffer = checked_malloc(BLEN);
   Temp_temp r = Temp_newtemp(); 
   int i; T_exp e1, e2; // only a part of them will be used in each instruction.
   switch (e->kind) {
@@ -115,7 +116,7 @@ static Temp_temp munchExp(T_exp e)
                 sprintf(buffer, "\tmovl\t`s0, `d0\n");
                 emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), NULL), NULL));
 
-                buffer = checked_malloc(64);
+                buffer = checked_malloc(BLEN);
                 sprintf(buffer, "\taddl\t`s0, `d0\n");
                 emit(AS_Oper(buffer, L(r, NULL), L(munchExp(rt), L(r, NULL)), NULL)); 
                 // the second src is strange: x := x+1, x still in "in"
@@ -129,7 +130,7 @@ static Temp_temp munchExp(T_exp e)
               sprintf(buffer, "\tmovl\t`s0, `d0\n");
               emit(AS_Oper(buffer, L(r, NULL), L(munchExp(rt), NULL), NULL));
 
-              buffer = checked_malloc(64);
+              buffer = checked_malloc(BLEN);
               sprintf(buffer, "\tsubl\t`s0, `d0\n");
               emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), L(r, NULL)), NULL));
               return r; 
@@ -139,7 +140,7 @@ static Temp_temp munchExp(T_exp e)
               sprintf(buffer, "\tmovl\t`s0, `d0\n");
               emit(AS_Oper(buffer, L(r, NULL), L(munchExp(rt), NULL), NULL));
 
-              buffer = checked_malloc(64);
+              buffer = checked_malloc(BLEN);
               sprintf(buffer, "\timull\t`s0, `d0\n");
               emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), L(r, NULL)), NULL));
               return r; 
@@ -152,11 +153,11 @@ static Temp_temp munchExp(T_exp e)
               sprintf(buffer, "\tmovl\t`s0, `d0\n");
               emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), NULL), NULL));
 
-              buffer = checked_malloc(64);
+              buffer = checked_malloc(BLEN);
               sprintf(buffer, "\tcltd\n");
               emit(AS_Oper(buffer, NULL, NULL, NULL));
 
-              buffer = checked_malloc(64);
+              buffer = checked_malloc(BLEN);
               sprintf(buffer, "\tidiv\t`s0\n");
               AS_instr debug = AS_Oper(buffer, NULL, L(munchExp(rt), L(r, NULL)), NULL);
               emit(debug);
@@ -180,8 +181,8 @@ static Temp_temp munchExp(T_exp e)
     case T_NAME:
       {
         printf("warning: reach T_NAME!\n");
-        sprintf(buffer, "%s:\n", S_name(e->u.NAME));
-        emit(AS_Oper(buffer, NULL, NULL, NULL));
+        sprintf(buffer, "\tmovl\t$%s, `d0\n", S_name(e->u.NAME));
+        emit(AS_Oper(buffer, L(r, NULL), NULL, NULL));
         return r; 
       }
     case T_CALL:
@@ -203,17 +204,16 @@ static Temp_tempList munchArgs(int i, T_expList args)
 {
   if (!args) return NULL;
   // we receive a args of reversed order, so just printit here. i=0 for argsN, i=N for args0
-  char *buffer = checked_malloc(64);
+  char *buffer = checked_malloc(BLEN);
   sprintf(buffer, "\tpush\t`s0\n");
   emit(AS_Oper(buffer, NULL, L(munchExp(args->head), NULL), NULL));
 
   return munchArgs(i+1, args->tail);
 }
 
-
 static void munchStm(T_stm s)
 {
-  char *buffer = checked_malloc(128);
+  char *buffer = checked_malloc(BLEN);
   int i; T_exp e1, e2;
   switch (s->kind) {
     case T_MOVE:
@@ -285,7 +285,7 @@ static void munchStm(T_stm s)
       }
     case T_CJUMP:
       {
-        sprintf(buffer, "\tcmpl\t`s0, `s1\n");
+        sprintf(buffer, "\tcmpl\t`s1, `s0\n"); // .. that's the correct answer
         emit(AS_Oper(buffer, NULL, L(munchExp(s->u.CJUMP.left), L(munchExp(s->u.CJUMP.right), NULL)), NULL));
         char *op;
         switch (s->u.CJUMP.op) {
@@ -310,11 +310,11 @@ static void munchStm(T_stm s)
           default:
             assert(0); 
         }
-        buffer = checked_malloc(64);
+        buffer = checked_malloc(BLEN);
         sprintf(buffer, "\t%s\t%s\n", op, Temp_labelstring(s->u.CJUMP.true)); // jump to true
         emit(AS_Oper(buffer, NULL, NULL, AS_Targets(Temp_LabelList(s->u.CJUMP.true, NULL))));
 
-        buffer = checked_malloc(64);
+        buffer = checked_malloc(BLEN);
         sprintf(buffer, "\t%s\t%s\n", op, Temp_labelstring(s->u.CJUMP.false)); // jump to false
         emit(AS_Oper(buffer, NULL, NULL, AS_Targets(Temp_LabelList(s->u.CJUMP.false, NULL))));
         return;

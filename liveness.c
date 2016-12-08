@@ -142,6 +142,7 @@ static void createInOutTable(G_graph flow, G_table in, G_table out)
       if (!equals(intl_d, intl) || !equals(outtl, outtl_d)) {
         DONE=FALSE;
       }
+      //printf(".");
     }
   }
 }
