@@ -40,6 +40,9 @@ AS_instrList F_codegen(F_frame f, T_stmList stmList) {
   Temp_enter(F_tempMap, F_SP(), "%esp");
 
   for (s1 = stmList; s1; s1 = s1->tail) munchStm(s1->head);
+
+  // mark caller-save regs as "define"
+  emit(AS_Oper("nop", NULL, F_CallerSaves()/* src */, NULL));
   list = iList;
   iList = last = NULL;
   return list;
@@ -140,12 +143,13 @@ static Temp_temp munchExp(T_exp e)
             }
           case T_mul :
             {
+              // r = s1 * s2
               sprintf(buffer, "\tmovl\t`s0, `d0\n");
-              emit(AS_Oper(buffer, L(r, NULL), L(munchExp(rt), NULL), NULL));
+              emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), NULL), NULL));
 
               buffer = checked_malloc(BLEN);
               sprintf(buffer, "\timull\t`s0, `d0\n");
-              emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), L(r, NULL)), NULL));
+              emit(AS_Oper(buffer, L(r, NULL), L(munchExp(rt), L(r, NULL)), NULL));
               return r; 
             }
           case T_div :
@@ -192,9 +196,10 @@ static Temp_temp munchExp(T_exp e)
       {
         assert(e->u.CALL.fun->kind == T_NAME); // we always call by name...(e.g. never "call *%eax")
         Temp_tempList l = munchArgs(0, e->u.CALL.args);
+        assert(!l); // never pass by register.
 
         sprintf(buffer, "\tcall\t%s\n", Temp_labelstring(e->u.CALL.fun->u.NAME));
-        emit(AS_Oper(buffer, L(F_RV(), NULL), l, NULL));
+        emit(AS_Oper(buffer, F_CallerSaves(), l, NULL));
         return F_RV();
       }
 

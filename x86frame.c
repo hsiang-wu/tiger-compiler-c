@@ -9,6 +9,29 @@
 #include "tree.h"
 #include "frame.h"
 
+#define REG_NUMS 6
+#define REGDEC(name) \
+  static Temp_temp name() {\
+    static Temp_temp name = NULL;\
+    if (!name) { \
+      name = Temp_newtemp();\
+    }\
+    return name;\
+  }
+REGDEC(eax);
+REGDEC(ebx);
+REGDEC(ecx);
+REGDEC(edx);
+REGDEC(esi);
+REGDEC(edi);
+#undef REGDEC
+//static Temp_temp eax() { regbody; }
+//static Temp_temp ebx() { regbody; }
+//static Temp_temp ecx() { regbody; }
+//static Temp_temp edx() { regbody; }
+//static Temp_temp esi() { regbody; }
+//static Temp_temp edi() { regbody; }
+
 /*Lab5: Your implementation here.*/
 const int F_wordSize = 4;
 
@@ -124,21 +147,30 @@ F_fragList F_FragList(F_frag head, F_fragList tail) {
 	return fl;
 }
 
-#define REG_NUMS 6
-#define regbody static Temp_temp r = NULL;\
-  if (!r) r = Temp_newtemp();\
-  return r;
 
-static Temp_temp eax() { regbody; }
-static Temp_temp ebx() { regbody; }
-static Temp_temp ecx() { regbody; }
-static Temp_temp edx() { regbody; }
-static Temp_temp esi() { regbody; }
-static Temp_temp edi() { regbody; }
+Temp_tempList F_CallerSaves()
+{
+  static Temp_tempList regs = NULL;
+  if (!regs) {
+    regs = Temp_TempList(eax(), Temp_TempList(edx(), Temp_TempList(ecx(), NULL)));
+  }
+  return regs;
+}
+
+Temp_tempList F_CalleeSaves(void);
+
+void F_initRegs()
+{
+  Temp_enter(F_tempMap, eax(), "%eax");
+  Temp_enter(F_tempMap, ebx(), "%ebx");
+  Temp_enter(F_tempMap, ecx(), "%ecx");
+  Temp_enter(F_tempMap, edx(), "%edx");
+  Temp_enter(F_tempMap, esi(), "%esi");
+  Temp_enter(F_tempMap, edi(), "%edi");
+}
 
 Temp_tempList F_registers()
 {
-  static string colors[REG_NUMS] = {"%eax", "%ebx", "%ecx", "%edx", "%esi", "%edi"};
   static Temp_tempList regs = NULL;
   if (!regs) {
     regs = Temp_TempList(eax(), regs);
@@ -147,13 +179,6 @@ Temp_tempList F_registers()
     regs = Temp_TempList(edx(), regs);
     regs = Temp_TempList(esi(), regs);
     regs = Temp_TempList(edi(), regs);
-
-    Temp_enter(F_tempMap, eax(), "%eax");
-    Temp_enter(F_tempMap, ebx(), "%ebx");
-    Temp_enter(F_tempMap, ecx(), "%ecx");
-    Temp_enter(F_tempMap, edx(), "%edx");
-    Temp_enter(F_tempMap, esi(), "%esi");
-    Temp_enter(F_tempMap, edi(), "%edi");
   }
   return regs;
 }
@@ -161,11 +186,23 @@ Temp_tempList F_registers()
 T_stm F_procEntryExit1(F_frame frame, T_stm stm)
 {
   assert(frame->name);
-  F_allocLocal(frame, TRUE); // place callee-save registers
-  F_allocLocal(frame, TRUE); // place callee-save registers
-  F_allocLocal(frame, TRUE); // place callee-save registers
-  T_Move()
-  return T_Seq(T_Label(frame->name), stm);
+  F_access f_ebx = F_allocLocal(frame, TRUE); // place callee-save registers
+  F_access f_esi = F_allocLocal(frame, TRUE); // place callee-save registers
+  F_access f_edi = F_allocLocal(frame, TRUE); // place callee-save registers
+
+  T_stm rstr; // restore
+  rstr = T_Move(T_Temp(ebx()), F_Exp(f_ebx, T_Temp(F_FP())));
+  rstr = T_Seq(T_Move(T_Temp(esi()), F_Exp(f_esi, T_Temp(F_FP()))), rstr);
+  rstr = T_Seq(T_Move(T_Temp(edi()), F_Exp(f_edi, T_Temp(F_FP()))), rstr);
+
+  T_stm save = T_Seq(stm, rstr);
+  save = T_Seq(T_Move(F_Exp(f_ebx, T_Temp(F_FP())), T_Temp(ebx())), save);
+  save = T_Seq(T_Move(F_Exp(f_esi, T_Temp(F_FP())), T_Temp(esi())), save);
+  save = T_Seq(T_Move(F_Exp(f_edi, T_Temp(F_FP())), T_Temp(edi())), save);
+
+
+  //return T_Seq(T_Label(frame->name), stm); 
+  return T_Seq(T_Label(frame->name), save);
 }
 
 Temp_temp F_FP(void)

@@ -65,16 +65,17 @@ static void printInsNode(void * p)
 {
   AS_instr i = p;
   char *names[3] = {[I_OPER]="oper", [I_LABEL]="label", [I_MOVE]="move"};
-  printf("\n%s\n", names[i->kind]);
+  printf("\n%s", names[i->kind]);
 
     switch (i->kind) {
       case I_LABEL: 
         {
-          printf("%s\n", S_name(i->u.LABEL.label));
+          printf("%s\n", i->u.LABEL.assem);
           break;
         }
       case I_OPER: 
         {
+          printf("%s\n", i->u.OPER.assem);
           printf("FG_def:\n");
           Temp_printList(i->u.OPER.dst);
           printf("FG_use:\n");
@@ -83,6 +84,7 @@ static void printInsNode(void * p)
         }
       case I_MOVE: 
         {
+          printf("%s\n", i->u.MOVE.assem);
           printf("(move)FG_def:\n");
           Temp_printList(i->u.MOVE.dst);
           printf("(move)FG_use:\n");
@@ -92,7 +94,8 @@ static void printInsNode(void * p)
     }
 }
 
-G_graph FG_AssemFlowGraph(AS_instrList il, F_frame f) {
+G_graph FG_AssemFlowGraph(AS_instrList il, F_frame f) 
+{
 	//your code here.
     G_graph g = G_Graph();
     G_node curr = NULL, prev = NULL;
@@ -121,8 +124,8 @@ G_graph FG_AssemFlowGraph(AS_instrList il, F_frame f) {
         if (((AS_instr) G_nodeInfo(curr))->kind == I_OPER) 
           FG_addJumps(label_tb, curr);
     }
-    //  printf("flowgraph:\n");
-    //  G_show(stdout, G_nodes(g), printInsNode);
-    //  printf("end of flowgraph:\n");
+    printf("\nflowgraph:\n");
+    G_show(stdout, G_nodes(g), printInsNode);
+    printf("end of flowgraph:\n");
 	return g;
 }
