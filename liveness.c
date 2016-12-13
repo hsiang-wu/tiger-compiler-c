@@ -91,13 +91,16 @@ Temp_temp Live_gtemp(G_node n) {
 static void createInOutTable(G_graph flow, G_table in, G_table out)
 {
   assert(flow);
-  G_nodeList nl_const = G_nodes(flow), nl;
+  G_nodeList nl_const = G_nodes(flow), nl, tl=NULL;
 
   // init.
   for (nl=nl_const; nl; nl = nl->tail) {
     G_enter(in, nl->head, NULL);
     G_enter(out, nl->head, NULL);
+    if (!nl->tail) tl = nl;
   }
+
+  //G_enter(out, tl->head, F_CallerSaves()); // add to out: caller save regs
   
   bool DONE=FALSE;
   while (!DONE) {
@@ -135,7 +138,7 @@ static void createInOutTable(G_graph flow, G_table in, G_table out)
       //Temp_printList(intl);
       //printf("out:\n");
       //Temp_printList(outtl);
-      //printf("end out\n");
+      //printf("\n");
       /*
        * repeat until in = in1, out = out1
        */
@@ -144,7 +147,13 @@ static void createInOutTable(G_graph flow, G_table in, G_table out)
       }
       //printf(".");
     }
+    //printf("=====\n");
   }
+  printf("last in:\n");
+  Temp_printList(G_look(in, tl->head));
+  printf("last out:\n");
+  Temp_printList(G_look(out, tl->head));
+  printf("\n");
 }
 
 static G_graph initItfGraph(G_nodeList nl, TAB_table tempToNode)
@@ -222,8 +231,9 @@ static G_graph inteferenceGraph(G_nodeList nl, G_table liveMap)
     //}
   }
 
-  // printf("inteferenceGraph:\n");
-  // G_show(stdout, G_nodes(g), Temp_print); // debug
+  printf("\ninteferenceGraph:\n");
+  G_show(stdout, G_nodes(g), Temp_print); // debug
+  printf("end of inteferenceGraph\n");
   return g;
 }
 

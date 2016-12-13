@@ -33,6 +33,7 @@ static void doProc(FILE *out, F_frame frame, T_stm body)
  AS_instrList iList;
 
  F_tempMap = Temp_empty();
+ F_initRegs();
 
  stmList = C_linearize(body);
  stmList = C_traceSchedule(C_basicBlocks(stmList));

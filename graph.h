@@ -1,3 +1,5 @@
+#ifndef GRAPH_H
+#define GRAPH_H
 /*
  * graph.h - Abstract Data Type (ADT) for directed graphs
  */
@@ -62,3 +64,5 @@ void G_enter(G_table t, G_node node, void *value);
 
 /* Tell what "node" maps to in table "t" */
 void *G_look(G_table t, G_node node);
+
+#endif

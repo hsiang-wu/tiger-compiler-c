@@ -4,12 +4,14 @@
 #ifndef FRAME_H
 #define FRAME_H
 
+#include "tree.h"
 #include "assem.h"
 
 typedef struct F_frame_ *F_frame;
 typedef struct F_access_ *F_access;
 
 Temp_map F_tempMap;
+void F_initRegs();
 
 /* declaration for fragments */
 typedef struct F_frag_ *F_frag;
@@ -52,6 +54,9 @@ Temp_tempList F_registers();
 Temp_temp F_SP(void);
 Temp_temp F_RA(void);
 Temp_temp F_RV(void);
+Temp_tempList F_CallerSaves(void);
+Temp_tempList F_CalleeSaves(void);
+
 F_frag F_newProcFrag(T_stm body, F_frame frame);
 T_stm F_procEntryExit2(AS_instrList body);
 AS_proc F_procEntryExit3(F_frame frame, AS_instrList body);

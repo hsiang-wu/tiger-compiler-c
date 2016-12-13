@@ -484,7 +484,9 @@ void Tr_procEntryExit(Tr_level level, Tr_exp body) {
   //printf("p %d\n", ++debug_proc_count);
   // move the value of body to RV(return value register)
   T_stm procstm = F_procEntryExit1(level->frame, T_Move(T_Temp(F_RV()), unEx(body)));
+  printf("print stm\n");
   printStmList(stdout, T_StmList(procstm, NULL));
+  printf("-print stm\n");
   fragList = F_FragList(F_ProcFrag(procstm, level->frame), fragList);
 }
 
