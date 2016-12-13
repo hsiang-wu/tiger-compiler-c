@@ -287,6 +287,30 @@ static void munchStm(T_stm s)
             }
           case T_TEMP:
             {
+              T_exp mem;
+              e2 = s->u.MOVE.dst;
+              if (s->u.MOVE.src->kind == T_MEM && 
+                  (mem = s->u.MOVE.src->u.MEM)->kind == T_BINOP &&
+                  // only for move off(%reg), %dst
+                  (mem->u.BINOP.left->kind == T_CONST || 
+                    mem->u.BINOP.right->kind == T_CONST)) {
+                assert(mem->u.BINOP.op == T_plus);
+                T_exp lt = mem->u.BINOP.left, rt = mem->u.BINOP.right;
+
+                if (lt->kind == T_CONST) {
+                  assert(rt->kind != T_CONST);
+                  i = lt->u.CONST; e1 = rt;
+                } else {
+                  i = rt->u.CONST; e1 = lt;
+                }
+                Temp_temp tmp1 = munchExp(e1);
+                Temp_temp tmp2 = munchExp(e2);
+                sprintf(buffer, "\tmovl\t%d(`s0), `d0\n", i);
+                emit(AS_Oper(buffer, L(tmp2, NULL),
+                      L(tmp1, NULL), NULL));
+                return; 
+              }
+
               Temp_temp dst = s->u.MOVE.dst->u.TEMP;
               sprintf(buffer, "\tmovl\t`s0, `d0\n");
               emit(AS_Move(buffer, L(dst, NULL), L(munchExp(s->u.MOVE.src), NULL)));

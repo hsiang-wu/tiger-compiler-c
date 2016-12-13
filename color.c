@@ -6,7 +6,7 @@
 static G_node
 popInsig(G_nodeList* nl, int K, TAB_table degree)
 {
-  if (!nl) return NULL;
+  assert(nl);
 
   G_nodeList last = NULL, nll = *nl;
   for (nll = *nl; nll; nll = nll->tail) {
@@ -32,6 +32,9 @@ popInsig(G_nodeList* nl, int K, TAB_table degree)
     }
     last = nll;
   }
+
+  printf("NEED TO IMPLEMENT SPILL");
+  return NULL;
   assert(0 && "NEED TO IMPLEMENT SPILL");
 }
 
@@ -98,6 +101,8 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
   while (nl) {
     G_node n = popInsig(
       &nl, K, degree); // pop a insignaficant(degree < K) node from graph
+
+    if (!n) goto spill;
 
     push_stack(&stack, n);
   }

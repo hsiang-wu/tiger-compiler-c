@@ -105,7 +105,10 @@ F_frame F_newFrame(Temp_label name, U_boolList formals)
   frame->name = name;
   frame->off = 4;
 
-  if (!formals) return frame; // only happens in outermost
+  if (!formals) {
+    frame->off = 0;
+    return frame; // only happens in outermost
+  }
 
   F_accessList al = checked_malloc(sizeof(*al));
   F_accessList head = al;
