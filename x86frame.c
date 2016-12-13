@@ -164,7 +164,7 @@ T_stm F_procEntryExit1(F_frame frame, T_stm stm)
   F_allocLocal(frame, TRUE); // place callee-save registers
   F_allocLocal(frame, TRUE); // place callee-save registers
   F_allocLocal(frame, TRUE); // place callee-save registers
-  T_Move()
+  //T_Move()
   return T_Seq(T_Label(frame->name), stm);
 }
 
