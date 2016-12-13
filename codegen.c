@@ -30,6 +30,26 @@ static void emit(AS_instr inst)
   if (last != NULL)
     last = last->tail = AS_InstrList(inst, NULL);
   else last = iList = AS_InstrList(inst, NULL);
+
+  /* after def, immediate use */
+  switch (inst->kind) {
+    case I_OPER:
+      if (inst->u.OPER.dst) {
+        AS_instr pseudo_use = AS_Oper("", NULL, inst->u.OPER.dst, NULL);
+        last = last->tail = AS_InstrList(pseudo_use,NULL);
+      }
+      break;
+    case I_MOVE:
+      if (inst->u.MOVE.dst) {
+        AS_instr pseudo_use = AS_Oper("", NULL, inst->u.MOVE.dst, NULL);
+        last = last->tail = AS_InstrList(pseudo_use,NULL);
+      }
+      break;
+    case I_LABEL:
+      break;
+      // do nothing
+  }
+
 }
 
 AS_instrList F_codegen(F_frame f, T_stmList stmList) {
