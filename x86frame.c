@@ -15,6 +15,8 @@
     static Temp_temp name = NULL;\
     if (!name) { \
       name = Temp_newtemp();\
+      printf(#name"");\
+      Temp_print(name);\
     }\
     return name;\
   }
@@ -24,13 +26,9 @@ REGDEC(ecx);
 REGDEC(edx);
 REGDEC(esi);
 REGDEC(edi);
+REGDEC(ebp);
+
 #undef REGDEC
-//static Temp_temp eax() { regbody; }
-//static Temp_temp ebx() { regbody; }
-//static Temp_temp ecx() { regbody; }
-//static Temp_temp edx() { regbody; }
-//static Temp_temp esi() { regbody; }
-//static Temp_temp edi() { regbody; }
 
 /*Lab5: Your implementation here.*/
 const int F_wordSize = 4;
@@ -210,18 +208,16 @@ T_stm F_procEntryExit1(F_frame frame, T_stm stm)
 
 Temp_temp F_FP(void)
 {
-  static Temp_temp fp = NULL;
-  if (fp == NULL)
-    fp = Temp_newtemp();
-  return fp;
+  //static Temp_temp fp = NULL;
+  //if (fp == NULL)
+  //  fp = Temp_newtemp();
+  //return fp;
+  return ebp();
 }
 
 Temp_temp F_RV(void)
 {
-  static Temp_temp fp = NULL;
-  if (fp == NULL)
-    fp = Temp_newtemp();
-  return fp;
+  return eax();
 }
 
 Temp_temp F_SP(void)
@@ -286,4 +282,10 @@ AS_proc F_procEntryExit3(F_frame frame, AS_instrList body)
   proc->body = body;
   proc->epilog = "\tleave\n\tret\n";
   return proc;
+}
+
+int F_frameOffset(F_access acc)
+{
+  assert(acc->kind == inFrame && "ask for offset of a register!");
+  return acc->u.offset;
 }

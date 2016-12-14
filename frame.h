@@ -62,4 +62,7 @@ T_stm F_procEntryExit2(AS_instrList body);
 AS_proc F_procEntryExit3(F_frame frame, AS_instrList body);
 F_frag F_string(Temp_label lab, string lit);
 
+int F_frameOffset(F_access);
+
+
 #endif

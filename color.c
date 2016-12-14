@@ -6,7 +6,8 @@
 static G_node
 popInsig(G_nodeList* nl, int K, TAB_table degree)
 {
-  assert(nl);
+  assert(nl && "nl is NULL");
+  assert(*nl && "*nl is NULL");
 
   G_nodeList last = NULL, nll = *nl;
   for (nll = *nl; nll; nll = nll->tail) {
@@ -35,7 +36,7 @@ popInsig(G_nodeList* nl, int K, TAB_table degree)
 
   printf("NEED TO IMPLEMENT SPILL");
   return NULL;
-  assert(0 && "NEED TO IMPLEMENT SPILL");
+  // assert(0 && "NEED TO IMPLEMENT SPILL");
 }
 
 static void
@@ -58,6 +59,8 @@ copy_nodes(G_nodeList nl)
 {
   G_nodeList nldup = NULL;
   for (; nl; nl = nl->tail) {
+    // modify nodes in this list also
+    // changes the graph. But read, delete&add their references won't.
     nldup = G_NodeList(nl->head, nldup);
   }
   return nldup;
@@ -67,7 +70,7 @@ static TAB_table
 degreeTable(G_nodeList nl)
 {
   TAB_table degree = TAB_empty(); // because we can't rmEdge(don't know how to
-                                  // store.. we build a virtual degree:
+                                  // restore.. we build a virtual degree:
                                   // node-int map
 
   for (; nl; nl = nl->tail) {
@@ -75,6 +78,20 @@ degreeTable(G_nodeList nl)
     // printf("node:%p.degree:%d\n", nl->head, G_degree(nl->head));
   }
   return degree;
+}
+
+static Temp_tempList
+nl2tl(G_nodeList nl)
+{
+  Temp_tempList tl = NULL, hd = NULL;
+  for (; nl; nl = nl->tail) {
+    Temp_temp reg = G_nodeInfo(nl->head);
+    if (!tl)
+      hd = tl = Temp_TempList(reg, NULL);
+    else
+      tl = tl->tail = Temp_TempList(reg, NULL);
+  }
+  return hd;
 }
 
 struct COL_result
@@ -93,6 +110,7 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
   printf("K=%d\n", K);
 
   G_nodeList stack = NULL;
+  ret.spills = NULL;
 
   G_nodeList nl = G_nodes(ig);
   nl = copy_nodes(nl); // so it won't affect the graph
@@ -103,8 +121,9 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
       &nl, K, degree); // pop a insignaficant(degree < K) node from graph
 
     if (!n) {
-      // spill
-      break;
+      ret.spills = nl2tl(nl);
+      return ret;
+      // create spill list
     }
 
     push_stack(&stack, n);
@@ -138,7 +157,6 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
   }
 
   ret.coloring = initial;
-  ret.spills = NULL;
 
   printf("dump coloring map:\n");
   Temp_dumpMap(stdout, ret.coloring);
