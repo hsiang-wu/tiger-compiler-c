@@ -6,7 +6,8 @@
 static G_node
 popInsig(G_nodeList* nl, int K, TAB_table degree)
 {
-  assert(nl);
+  assert(nl && "nl is NULL");
+  assert(*nl && "*nl is NULL");
 
   G_nodeList last = NULL, nll = *nl;
   for (nll = *nl; nll; nll = nll->tail) {
@@ -21,12 +22,14 @@ popInsig(G_nodeList* nl, int K, TAB_table degree)
 
       if (last) { // remove this node
         last->tail = nll->tail;
-      } else {
+      }
+      else {
         *nl = (*nl)->tail;
       }
       // if (*nl) G_show(stdout, *nl, Temp_print);
       return tmp;
-    } else {
+    }
+    else {
       // printf("degree %d,", d);
       // Temp_print(G_nodeInfo(nll->head));
     }
@@ -35,7 +38,7 @@ popInsig(G_nodeList* nl, int K, TAB_table degree)
 
   printf("NEED TO IMPLEMENT SPILL");
   return NULL;
-  assert(0 && "NEED TO IMPLEMENT SPILL");
+  // assert(0 && "NEED TO IMPLEMENT SPILL");
 }
 
 static void
@@ -77,6 +80,20 @@ degreeTable(G_nodeList nl)
   return degree;
 }
 
+static Temp_tempList
+nl2tl(G_nodeList nl)
+{
+  Temp_tempList tl = NULL, hd = NULL;
+  for (; nl; nl = nl->tail) {
+    Temp_temp reg = G_nodeInfo(nl->head);
+    if (!tl)
+      hd = tl = Temp_TempList(reg, NULL);
+    else
+      tl = tl->tail = Temp_TempList(reg, NULL);
+  }
+  return hd;
+}
+
 struct COL_result
 COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
 {
@@ -93,6 +110,7 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
   printf("K=%d\n", K);
 
   G_nodeList stack = NULL;
+  ret.spills = NULL;
 
   G_nodeList nl = G_nodes(ig);
   nl = copy_nodes(nl); // so it won't affect the graph
@@ -102,7 +120,11 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
     G_node n = popInsig(
       &nl, K, degree); // pop a insignaficant(degree < K) node from graph
 
-    if (!n) goto spill;
+    if (!n) {
+      ret.spills = nl2tl(nl);
+      return ret;
+      // create spill list
+    }
 
     push_stack(&stack, n);
   }
@@ -135,7 +157,6 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
   }
 
   ret.coloring = initial;
-  ret.spills = NULL;
 
   printf("dump coloring map:\n");
   Temp_dumpMap(stdout, ret.coloring);
