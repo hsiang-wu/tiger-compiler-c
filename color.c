@@ -102,7 +102,10 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
     G_node n = popInsig(
       &nl, K, degree); // pop a insignaficant(degree < K) node from graph
 
-    if (!n) goto spill;
+    if (!n) {
+      // spill
+      break;
+    }
 
     push_stack(&stack, n);
   }
