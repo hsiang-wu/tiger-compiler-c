@@ -1,28 +1,26 @@
 #ifndef TRANSLATE_H
 #define TRANSLATE_H
 
-#include "temp.h"
-#include "tree.h"
 #include "absyn.h"
 #include "frame.h"
+#include "tree.h"
 
 /* Lab5: your code below */
 
-typedef struct Tr_exp_ *Tr_exp;
+typedef struct Tr_exp_* Tr_exp;
 
-typedef struct Tr_expList_ *Tr_expList;
+typedef struct Tr_expList_* Tr_expList;
 
-typedef struct Tr_access_ *Tr_access;
+typedef struct Tr_access_* Tr_access;
 
-typedef struct Tr_accessList_ *Tr_accessList;
+typedef struct Tr_accessList_* Tr_accessList;
 
-typedef struct Tr_level_ *Tr_level;
+typedef struct Tr_level_* Tr_level;
 
-typedef struct patchList_ *patchList;
+typedef struct patchList_* patchList;
 
 Tr_level Tr_outermost(void);
-Tr_level Tr_newLevel(Tr_level parent, Temp_label name,
-    U_boolList formals);
+Tr_level Tr_newLevel(Tr_level parent, Temp_label name, U_boolList formals);
 Tr_accessList Tr_formals(Tr_level level);
 Tr_access Tr_allocLocal(Tr_level level, bool escape);
 
@@ -39,7 +37,7 @@ void Tr_elAppend(Tr_exp e, Tr_expList t);
 Tr_accessList AccTail(Tr_accessList accs);
 Tr_access AccHead(Tr_accessList accs);
 
-// IR 
+// IR
 
 Tr_exp Tr_simpleVar(Tr_access access, Tr_level level);
 Tr_exp Tr_fieldVar(Tr_exp exp, int off /* const ? */);
@@ -76,7 +74,7 @@ Tr_exp Tr_assignExp(Tr_exp, Tr_exp);
 
 Tr_exp Tr_breakExp();
 
-Tr_exp Tr_eqStringExp(A_oper, Tr_exp, Tr_exp);
+Tr_exp Tr_compString(A_oper, Tr_exp, Tr_exp);
 
 Tr_exp Tr_ifExp(Tr_exp, Tr_exp, Tr_exp);
 

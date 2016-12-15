@@ -171,8 +171,13 @@ transExp(S_table venv, S_table tenv, A_exp a, Tr_level level, Tr_exp brk)
         }
       }
 
-      // otherwise. comp return
-      return expTy(Tr_compExp(oper, left.exp, right.exp), Ty_Int());
+      if (left.ty->kind == Ty_string) {
+        return expTy(Tr_compString(oper, left.exp, right.exp), Ty_Int());
+      }
+      else {
+        // otherwise. comp return
+        return expTy(Tr_compExp(oper, left.exp, right.exp), Ty_Int());
+      }
     err_int:
       EM_error(a->u.op.left->pos, "integer required");
       goto err_ret;
