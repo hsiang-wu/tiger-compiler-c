@@ -335,17 +335,23 @@ Tr_exp Tr_recordExp(Tr_expList el_reversed) {
   Temp_temp r = Temp_newtemp();
   int i = 0;
   Tr_expList l;
-  T_stm seq;
-  T_stm *alloc = &seq; // pre-alloced place for alloc.
+  T_stm seq = NULL;
+  //T_stm *alloc = &seq; // pre-alloced place for alloc.
   for (l = el_reversed; l; l = l->tail, i++) {
+    if (seq) {
     seq = T_Seq(seq, T_Move(T_Mem(T_Binop(T_plus, T_Temp(r), T_Const(i * F_wordSize))), 
                unEx(l->head)));
+    } else {
+      seq = T_Move(T_Mem(T_Binop(T_plus, T_Temp(r), T_Const(i * F_wordSize))), 
+               unEx(l->head));
+    }
   }
   /*alloc len * WORD-SIZE mem*/
-  *alloc = T_Move(T_Temp(r),
-                   F_externalCall("allocRecord", T_ExpList(T_Const(i * F_wordSize), NULL)));
+  T_stm alloc = T_Move(T_Temp(r),
+                   F_externalCall("allocRecord", 
+                     T_ExpList(T_Const(i * F_wordSize), NULL)));
 
-  return Tr_Ex(T_Eseq(seq, T_Temp(r)));
+  return Tr_Ex(T_Eseq(T_Seq(alloc, seq), T_Temp(r)));
 }
 
 Tr_exp Tr_arrayExp(Tr_exp init, Tr_exp size)

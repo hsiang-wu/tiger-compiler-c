@@ -106,7 +106,7 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
     K++;
   }
 
-  K = 6;
+  K = 7; // since we add %ebp as a temp. it can be 6 + 1 =7.
   printf("K=%d\n", K);
 
   G_nodeList stack = NULL;
@@ -134,23 +134,31 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
   while (stack) {
     G_node n = pop_stack(&stack);
 
+    printf("look...");
+    Temp_print(G_nodeInfo(n));
+    // assign a color
+    if (Temp_look(initial, G_nodeInfo(n))) {
+      printf("already colored\n");
+      continue; // already have a color.(i.e. %eax of idiv)
+    }
+
     G_nodeList adj = G_adj(n);
     TAB_table adjcolors = TAB_empty();
     for (; adj; adj = adj->tail) {
       string color = Temp_look(initial, G_nodeInfo(adj->head));
+      printf("%s", color);
+      Temp_print(G_nodeInfo(adj->head));
       if (color) {
-        TAB_enter(adjcolors, color, (void*)1);
+        TAB_enter(adjcolors, S_Symbol(color), (void*)1);
+        printf("enter\n");
       }
     }
 
-    // assign a color
-    if (Temp_look(initial, G_nodeInfo(n)))
-      continue; // already have a color.(i.e. %eax of idiv)
-
     int i = 0;
     for (; i < 6; i++) {
-      if (!TAB_look(adjcolors, colors[i])) {
+      if (!TAB_look(adjcolors, S_Symbol(colors[i]))) {
         Temp_enter(initial, G_nodeInfo(n), colors[i]);
+        printf("i=%d choose %s.\n", i, colors[i]);
         break;
       }
     }

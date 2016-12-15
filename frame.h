@@ -54,6 +54,7 @@ Temp_tempList F_registers();
 Temp_temp F_SP(void);
 Temp_temp F_RA(void);
 Temp_temp F_RV(void);
+Temp_temp F_DIV(void);
 Temp_tempList F_CallerSaves(void);
 Temp_tempList F_CalleeSaves(void);
 
