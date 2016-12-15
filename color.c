@@ -12,7 +12,7 @@ popInsig(G_nodeList* nl, int K, TAB_table degree)
   G_nodeList last = NULL, nll = *nl;
   for (nll = *nl; nll; nll = nll->tail) {
     int d;
-    d = (int)TAB_look(degree, nll->head);
+    d = (int) TAB_look(degree, nll->head);
     if (d < K) {
       G_node tmp = nll->head;
       G_nodeList adjs;
