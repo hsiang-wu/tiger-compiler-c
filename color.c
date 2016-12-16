@@ -12,7 +12,7 @@ popInsig(G_nodeList* nl, int K, TAB_table degree)
   G_nodeList last = NULL, nll = *nl;
   for (nll = *nl; nll; nll = nll->tail) {
     int d;
-    d = (int) TAB_look(degree, nll->head);
+    d = (int)TAB_look(degree, nll->head);
     if (d < K) {
       G_node tmp = nll->head;
       G_nodeList adjs;
@@ -94,6 +94,27 @@ nl2tl(G_nodeList nl)
   return hd;
 }
 
+static G_nodeList
+except_precolor(G_nodeList nl, Temp_tempList precolored)
+{
+  printf("before delete:");
+  G_show(stdout, nl, Temp_print);
+  G_nodeList newnl = NULL;
+  for (; nl; nl = nl->tail) {
+    Temp_temp reg = G_nodeInfo(nl->head);
+    if (!inList(precolored, reg)) {
+      if (!newnl) {
+        newnl = G_NodeList(nl->head, NULL);
+      } else {
+        newnl = newnl->tail = G_NodeList(nl->head, NULL);
+      }
+    }
+  }
+  printf("after delete:");
+  G_show(stdout, newnl, Temp_print);
+  return newnl;
+}
+
 struct COL_result
 COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
 {
@@ -107,7 +128,6 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
   }
 
   K = 7; // since we add %ebp as a temp. it can be 6 + 1 =7.
-  printf("K=%d\n", K);
 
   G_nodeList stack = NULL;
   ret.spills = NULL;
@@ -116,6 +136,10 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
   nl = copy_nodes(nl); // so it won't affect the graph
 
   TAB_table degree = degreeTable(nl);
+  // After constructing a degree table, we can delete
+  // initial regs from nodelists: they can't be spilled
+  // and doesn't affect our interfering. (refer to book)
+  //  nl = except_precolor(nl, regs);
   while (nl) {
     G_node n = popInsig(
       &nl, K, degree); // pop a insignaficant(degree < K) node from graph
