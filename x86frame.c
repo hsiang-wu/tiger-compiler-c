@@ -80,8 +80,12 @@ F_access F_allocLocal(F_frame f, bool escape)
       printf("frame offset:%d\n", f->off);
       return InFrame(f->off);
     } { /* LOL, also put on stack. But CAN be put in register */
-      f->off -= F_wordSize;
-      return InFrame(f->off);
+      //f->off -= F_wordSize;
+      //return InFrame(f->off);
+      Temp_temp reg = Temp_newtemp();
+      printf("alloclocal:");
+      Temp_print(reg);
+      return InReg(reg);
     }
 }
 
@@ -91,9 +95,8 @@ static F_access F_allocParam(F_frame f, bool escape)
       f->off += F_wordSize;
       printf("frame offset:%d\n", f->off);
       return InFrame(f->off);
-    } { /* LOL, also put on stack. But CAN be put in register */
-      f->off += F_wordSize;
-      return InFrame(f->off);
+    } {
+      return InReg(Temp_newtemp());
     }
 }
 
@@ -234,7 +237,7 @@ T_exp F_Exp(F_access acc, T_exp framePtr)
     return T_Mem(T_Binop(T_plus,
                         framePtr, T_Const(acc->u.offset)));
   } else { // in register
-    return framePtr;
+    return T_Temp(acc->u.reg);
   }
 }
 

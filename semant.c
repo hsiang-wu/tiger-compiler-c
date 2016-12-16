@@ -366,7 +366,7 @@ transVar(S_table venv, S_table tenv, A_var v, Tr_level level, Tr_exp brk)
   switch (v->kind) {
     case A_simpleVar: {
       E_enventry x = S_look(venv, v->u.simple);
-      dprintf("simple var! %s\n", S_name(v->u.simple));
+      printf("simple var! %s\n", S_name(v->u.simple));
       if (x && x->kind == E_varEntry) {
         Tr_access acc = x->u.var.access;
         return expTy(Tr_simpleVar(acc, level), actual_ty(x->u.var.ty));
@@ -441,7 +441,10 @@ transDec(S_table venv, S_table tenv, A_dec d, Tr_level level, Tr_exp brk)
     case A_varDec: {
       dprintf("dec:vardec:%p %p\n", d->u.var.var, d->u.var.typ);
       struct expty e = transExp(venv, tenv, d->u.var.init, level, brk);
-      E_enventry eentry = E_VarEntry(Tr_allocLocal(level, TRUE), e.ty);
+      // to test spill. make more escapes.
+      // change this back for correctness
+      //E_enventry eentry = E_VarEntry(Tr_allocLocal(level, TRUE), e.ty);
+      E_enventry eentry = E_VarEntry(Tr_allocLocal(level, FALSE), e.ty);
 
       Ty_ty ty;
       if (d->u.var.typ == NULL) {

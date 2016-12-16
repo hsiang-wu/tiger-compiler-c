@@ -585,9 +585,9 @@ Tr_procEntryExit(Tr_level level, Tr_exp body)
   // move the value of body to RV(return value register)
   T_stm procstm =
     F_procEntryExit1(level->frame, T_Move(T_Temp(F_RV()), unEx(body)));
-  printf("print stm\n");
-  printStmList(stdout, T_StmList(procstm, NULL));
-  printf("-print stm\n");
+ // printf("print stm\n");
+ // printStmList(stdout, T_StmList(procstm, NULL));
+ // printf("-print stm\n");
   fragList = F_FragList(F_ProcFrag(procstm, level->frame), fragList);
 }
 
@@ -638,7 +638,7 @@ Tr_compString(A_oper op, Tr_exp lt, Tr_exp rt)
   Temp_temp r = Temp_newtemp();
   T_stm eq = T_Move(
     T_Temp(r), F_externalCall("stringEqual",
-                              T_ExpList(unEx(lt), T_ExpList(unEx(rt), NULL))));
+                              T_ExpList(unEx(rt), T_ExpList(unEx(lt), NULL))));
   T_stm cond =
     T_Cjump(oper, T_Temp(r), T_Const(1), Temp_newlabel(), Temp_newlabel());
   patchList trues = PatchList(&cond->u.CJUMP.true, NULL);

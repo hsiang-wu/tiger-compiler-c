@@ -11,6 +11,7 @@
 #include "tree.h"
 #include "util.h"
 #include <stdio.h>
+#include <stdint.h>
 
 #include "codegen.h"
 #include "flowgraph.h"
@@ -26,9 +27,10 @@ static void rewrite_inst(Temp_tempList tl, Temp_temp oldt, Temp_temp newt);
 static void
 insert_after(AS_instrList il, AS_instr i)
 {
-  AS_instrList tmp = il->tail;
-  il->tail->head = i;
-  il->tail->tail = tmp;
+  AS_instrList tmp = AS_InstrList(i, il->tail);
+  //  il->tail->head = i;
+  //  il->tail->tail = tmp;
+  il->tail = tmp;
 }
 
 static void
@@ -44,12 +46,12 @@ rewrite_inst(Temp_tempList tl, Temp_temp oldt, Temp_temp newt)
 static int
 temp_uses(Temp_temp t)
 {
-  return (int)TAB_look(tempuse_, t);
+  return (intptr_t) TAB_look(tempuse_, t);
 }
 static int
 temp_defs(Temp_temp t)
 {
-  return (int)TAB_look(tempdef_, t);
+  return (intptr_t) TAB_look(tempdef_, t);
 }
 
 static double
@@ -58,7 +60,7 @@ heuristic(Temp_temp t)
   assert(t);
   G_node n = temp2node(t);
   int uses_defs = temp_uses(t) + temp_defs(t); // uses and defs in flowgraph
-  return 1.0 / G_degree(n);
+  return 1.0 * uses_defs / G_degree(n);
 }
 
 extern TAB_table tempMap;
@@ -119,11 +121,7 @@ select_spill(Temp_tempList tl)
   return mintemp;
 }
 
-enum
-{
-  AS_USE,
-  AS_DEF
-};
+enum { AS_USE, AS_DEF };
 static void
 rewrite(Temp_temp spill, AS_instrList il, F_frame f)
 {
@@ -134,6 +132,7 @@ rewrite(Temp_temp spill, AS_instrList il, F_frame f)
   Temp_tempList defs;
 
   F_access inmem = F_allocLocal(f, TRUE); // ESCAPE=TRUE. it's on stack
+  printf("rewrite\n");
   bool DEBUG_use_before_def = TRUE;
   for (; il; il = il->tail) {
     i = il->head;
@@ -141,21 +140,24 @@ rewrite(Temp_temp spill, AS_instrList il, F_frame f)
       case I_MOVE:
         uses = i->u.MOVE.src;
         defs = i->u.MOVE.dst;
+        break;
       case I_OPER: {
         uses = i->u.OPER.src;
         defs = i->u.OPER.dst;
+        break;
       }
       case I_LABEL:
         continue;
         break;
     }
     for (; uses; uses = uses->tail) {
-      assert(!DEBUG_use_before_def && "Use before def!");
       if (spill == uses->head) {
+        assert(!DEBUG_use_before_def && "Use before def!");
         // load before use.
         char* buffer = checked_malloc(64);
         Temp_temp t0 = Temp_newtemp();
         sprintf(buffer, "#spill\nmovl %d(%%ebp), `d0", F_frameOffset(inmem));
+        printf("%s\n", buffer);
         insert_after(last, AS_Oper(buffer, L(t0, NULL), NULL, NULL));
         // replace spill with t0 in the remaining of uses list.
         rewrite_inst(uses, spill, t0);
@@ -163,8 +165,8 @@ rewrite(Temp_temp spill, AS_instrList il, F_frame f)
       }
     }
     for (; defs; defs = defs->tail) {
-      DEBUG_use_before_def = FALSE;
       if (spill == defs->head) {
+        DEBUG_use_before_def = FALSE;
         // store after use
         char* buffer = checked_malloc(64);
         Temp_temp t0 = Temp_newtemp();
@@ -172,7 +174,8 @@ rewrite(Temp_temp spill, AS_instrList il, F_frame f)
         rewrite_inst(defs, spill, t0);
         // move it to memory
         sprintf(buffer, "#spill\nmovl `s0, %d(%%ebp)", F_frameOffset(inmem));
-        insert_after(last, AS_Oper(buffer, NULL, L(t0, NULL), NULL));
+        insert_after(il, AS_Oper(buffer, NULL, L(t0, NULL), NULL));
+        printf("%s\n", buffer);
         // replace spill with t0 in the remaining of uses list.
         break;
       }
@@ -187,7 +190,9 @@ RA_regAlloc(F_frame f, AS_instrList il)
   // your code here.
   struct RA_result ret;
 
-  for (;;) {
+  int debug = 0;
+  int upper = 8;
+  for (; debug < upper; debug++) {
     G_graph flowgraph = FG_AssemFlowGraph(il, f);
     struct Live_graph livegraph = Live_liveness(flowgraph);
 
@@ -200,13 +205,16 @@ RA_regAlloc(F_frame f, AS_instrList il)
 
     printf("====need spilling====\n");
     Temp_printList(cr.spills);
-    assert(0); // debug. stop here
+    // assert(0); // debug. stop here
 
     init_usesdefs(il);
     Temp_temp t = select_spill(cr.spills);
+    printf("Spill temporary:");
+    Temp_print(t);
     rewrite(t, il, f);
     printf("=======\n");
   }
+  assert(debug != upper && "spill error");
 
   ret.il = il;
   return ret;
