@@ -74,7 +74,7 @@ FG_addJumps(TAB_table t, G_node n)
   }
 }
 
-static void
+void
 printInsNode(void* p)
 {
   AS_instr i = p;

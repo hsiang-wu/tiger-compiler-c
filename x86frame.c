@@ -289,3 +289,8 @@ int F_frameOffset(F_access acc)
   assert(acc->kind == inFrame && "ask for offset of a register!");
   return acc->u.offset;
 }
+
+Temp_temp F_DIV(void)
+{
+  return edx();
+}

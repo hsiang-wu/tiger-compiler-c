@@ -181,21 +181,30 @@ munchExp(T_exp e)
         }
         case T_div: {
           // idiv S: eax <- [edx:eax] / S. ignore edx
+          Temp_temp ltmp = munchExp(lt);
+          Temp_temp rtmp = munchExp(rt);
           Temp_enter(F_tempMap, r, "%eax");
 
           sprintf(buffer, "\tmovl\t`s0, `d0\n");
-          emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), NULL), NULL));
+          // for convenience, use F_RV() to refer to %eax.
+          // since idiv is also a machine-specific instruction
+          // it does not seem to broken modularity.
+          emit(AS_Oper(buffer, L(F_RV(), NULL), L(ltmp, NULL), NULL));
 
           buffer = checked_malloc(BLEN);
           sprintf(buffer, "\tcltd\n");
-          emit(AS_Oper(buffer, NULL, NULL, NULL));
+          emit(AS_Oper(buffer, L(F_DIV(), NULL), NULL, NULL));
 
           buffer = checked_malloc(BLEN);
           sprintf(buffer, "\tidiv\t`s0\n");
           AS_instr debug =
-            AS_Oper(buffer, NULL, L(munchExp(rt), L(r, NULL)), NULL);
+            AS_Oper(buffer, L(F_RV(),NULL), L(rtmp, L(F_RV(), NULL)), NULL);
           emit(debug);
-          return r; // result in %eax
+          //sprintf(buffer, "\tmovl\t`s0, `d0\n\tcltd\n\tidiv\t`s1\n");
+          //AS_instr div =
+          //  AS_Oper(buffer, L(F_RV(), L(F_DIV(), NULL)), L(ltmp, L(rtmp, /*L(F_RV(),*/ NULL)), NULL);
+          //emit(div);
+          return F_RV(); // result in %eax
         }
         default:
           assert(0); // these ops are not implemented. so never reach here.
