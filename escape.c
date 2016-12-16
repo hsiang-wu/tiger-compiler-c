@@ -11,4 +11,5 @@ static void transDec(S_table env, int depth, A_dec d);
 static void transVar(S_table env, int depth, A_var v);
 
 void Esc_findEscape(A_exp exp) {
+  //EscapeEntry(d, &(x->escape));
 }

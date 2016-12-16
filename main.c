@@ -18,7 +18,7 @@
 #include "canon.h"
 #include "prabsyn.h"
 #include "printtree.h"
-//#include "escape.h" /* needed by escape analysis */
+#include "escape.h" /* needed by escape analysis */
 #include "parse.h"
 #include "codegen.h"
 #include "regalloc.h"
