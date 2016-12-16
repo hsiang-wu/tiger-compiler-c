@@ -317,9 +317,7 @@ Tr_callExp(Temp_label label, Tr_level fun, Tr_level call,
   for (; strcmp(externalCallNames[i], ""); i++) {
     if (strcmp(S_name(label), externalCallNames[i]) == 0) {
       T_expList args = NULL;
-      args = Tr_expList_convert(el_reversed); // it's all reversed. so actually
-                                              // (somehow) static link is the
-                                              // last para.
+      args = Tr_expList_convert(el_reversed);
 
       return Tr_Ex(F_externalCall(externalCallNames[i], args));
     }
@@ -426,8 +424,10 @@ Tr_recordExp(Tr_expList el_reversed)
 Tr_exp
 Tr_arrayExp(Tr_exp init, Tr_exp size)
 {
+  // because externalcall expects args in a reversed order.
+  // we must give the list in (init, size)
   return Tr_Ex(F_externalCall(
-    String("initArray"), T_ExpList(unEx(size), T_ExpList(unEx(init), NULL))));
+    String("initArray"), T_ExpList(unEx(init), T_ExpList(unEx(size), NULL))));
 }
 
 Tr_exp
@@ -492,8 +492,8 @@ Tr_seqExp(Tr_expList l)
 Tr_exp
 Tr_nilExp()
 {
-  //static Temp_temp nilTemp = NULL;
-  //if (!nilTemp) {
+  // static Temp_temp nilTemp = NULL;
+  // if (!nilTemp) {
   //  nilTemp = Temp_newtemp(); // so we can compare nil
   //  /* XXX */
   //  T_stm alloc =
@@ -501,7 +501,7 @@ Tr_nilExp()
   //           F_externalCall("allocRecord", T_ExpList(T_Const(0), NULL)));
   //  return Tr_Ex(T_Eseq(alloc, T_Temp(nilTemp)));
   //}
-  //else {
+  // else {
   //  return Tr_Ex(T_Temp(nilTemp));
   //}
   return Tr_Ex(T_Const(0));
