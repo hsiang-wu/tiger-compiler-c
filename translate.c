@@ -492,18 +492,19 @@ Tr_seqExp(Tr_expList l)
 Tr_exp
 Tr_nilExp()
 {
-  static Temp_temp nilTemp = NULL;
-  if (!nilTemp) {
-    nilTemp = Temp_newtemp(); // so we can compare nil
-    /* XXX */
-    T_stm alloc =
-      T_Move(T_Temp(nilTemp),
-             F_externalCall("allocRecord", T_ExpList(T_Const(0), NULL)));
-    return Tr_Ex(T_Eseq(alloc, T_Temp(nilTemp)));
-  }
-  else {
-    return Tr_Ex(T_Temp(nilTemp));
-  }
+  //static Temp_temp nilTemp = NULL;
+  //if (!nilTemp) {
+  //  nilTemp = Temp_newtemp(); // so we can compare nil
+  //  /* XXX */
+  //  T_stm alloc =
+  //    T_Move(T_Temp(nilTemp),
+  //           F_externalCall("allocRecord", T_ExpList(T_Const(0), NULL)));
+  //  return Tr_Ex(T_Eseq(alloc, T_Temp(nilTemp)));
+  //}
+  //else {
+  //  return Tr_Ex(T_Temp(nilTemp));
+  //}
+  return Tr_Ex(T_Const(0));
 }
 
 Tr_exp
@@ -616,9 +617,31 @@ Tr_getFragList()
 Tr_exp
 Tr_compString(A_oper op, Tr_exp lt, Tr_exp rt)
 {
+  T_relOp oper;
+  switch (op) {
+    case A_eqOp:
+      oper = T_eq;
+      break;
+    case A_neqOp:
+      oper = T_ne;
+      break;
+    default:
+      assert(0);
+  }
+
+  // T_stm cond =
+  //  T_Cjump(oper, unEx(left), unEx(right), Temp_newlabel(), Temp_newlabel());
+  // patchList trues = PatchList(&cond->u.CJUMP.true, NULL);
+  // patchList falses = PatchList(&cond->u.CJUMP.false, NULL);
+  // return Tr_Cx(trues, falses, cond);
+
   Temp_temp r = Temp_newtemp();
   T_stm eq = T_Move(
     T_Temp(r), F_externalCall("stringEqual",
                               T_ExpList(unEx(lt), T_ExpList(unEx(rt), NULL))));
+  T_stm cond =
+    T_Cjump(oper, T_Temp(r), T_Const(1), Temp_newlabel(), Temp_newlabel());
+  patchList trues = PatchList(&cond->u.CJUMP.true, NULL);
+  patchList falses = PatchList(&cond->u.CJUMP.false, NULL);
   return Tr_Ex(T_Eseq(eq, T_Temp(r)));
 }
