@@ -16,7 +16,9 @@ static G_node t2n(Temp_temp temp);
 #define n2t(node) G_nodeInfo(node)
 static void push_stack(G_nodeList* stack, G_node t);
 static void decre_degree(G_node);
-static void assign_colors();
+static Temp_tempList assign_colors(Temp_map tmap);
+
+static string colors[6] = { "%eax", "%ebx", "%ecx", "%edx", "%esi", "%edi" };
 
 static void
 freeze()
@@ -41,6 +43,8 @@ simplify()
   for (; adjs; adjs = adjs->tail) {
     decre_degree(adjs->head);
   }
+  printf("simplify: delete temp:");
+  Temp_print(t);
 }
 
 static TAB_table degree_;
@@ -86,8 +90,7 @@ delete_node(G_nodeList* nl, G_nodeList last, TAB_table degree)
   if (last) { // remove this node
     tmp = last->tail->head;
     last->tail = last->tail->tail;
-  }
-  else {
+  } else {
     tmp = (*nl)->head;
     *nl = (*nl)->tail;
   }
@@ -152,12 +155,10 @@ except_precolor(G_nodeList nl, Temp_tempList precolored)
     if (!inList(precolored, reg)) {
       if (newnl) {
         newnl = newnl->tail = G_NodeList(nl->head, NULL);
-      }
-      else {
+      } else {
         head = newnl = G_NodeList(nl->head, NULL);
       }
-    }
-    else {
+    } else {
       printf("delete:");
       Temp_print(reg);
     }
@@ -215,16 +216,17 @@ select_spill(TAB_table degree)
   return mintemp;
 }
 
-static void
-assign_colors()
+static Temp_tempList
+assign_colors(Temp_map tmap)
 {
+  Temp_tempList spilled_nodes = NULL;
   while (select_stack) {
     G_node n = pop_stack(&select_stack);
 
     printf("look...");
     Temp_print(G_nodeInfo(n));
     // assign a color
-    if (Temp_look(initial, G_nodeInfo(n))) {
+    if (Temp_look(tmap, G_nodeInfo(n))) {
       printf("already colored\n");
       continue; // already have a color.(i.e. %eax of idiv)
     }
@@ -233,7 +235,7 @@ assign_colors()
     G_nodeList DEBUG_adj_head = adj;
     TAB_table adjcolors = TAB_empty();
     for (; adj; adj = adj->tail) {
-      string color = Temp_look(initial, G_nodeInfo(adj->head));
+      string color = Temp_look(tmap, G_nodeInfo(adj->head));
       printf("%s", color);
       Temp_print(G_nodeInfo(adj->head));
       if (color) {
@@ -245,15 +247,17 @@ assign_colors()
     int i = 0;
     for (; i < 6; i++) {
       if (!TAB_look(adjcolors, S_Symbol(colors[i]))) {
-        Temp_enter(initial, G_nodeInfo(n), colors[i]);
+        Temp_enter(tmap, G_nodeInfo(n), colors[i]);
         printf("i=%d choose %s.\n", i, colors[i]);
         break;
       }
     }
+
     if (i == 6) {
-      assert(0 && "low degree nodes is supposed to be all colored!");
+      add(&spilled_nodes, n2t(n));
     }
   }
+  return spilled_nodes;
 }
 
 static void
@@ -263,11 +267,11 @@ make_worklist(G_graph g)
   G_nodeList nl = G_nodes(g);
   for (; nl; nl = nl->tail) {
     if (G_degree(nl->head) >= K) {
-      simplify_worklist =
-        Temp_TempList(G_nodeInfo(nl->head), simplify_worklist);
-    }
-    else {
-      spill_worklist = Temp_TempList(G_nodeInfo(nl->head), spill_worklist);
+      add(&simplify_worklist, n2t(nl->head));
+      printf("add to simplify_worklist\n");
+    } else {
+      add(&spill_worklist, n2t(nl->head));
+      printf("add to spill_worklist\n");
     }
   }
 }
@@ -287,26 +291,21 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
   // K = 7;
   printf("K=%d\n", K);
 
-  G_nodeList stack = NULL;      // low-degree nodes
-  G_nodeList spillstack = NULL; // potential spill nodes
-  ret.spills = NULL;
 
   G_nodeList nl = G_nodes(ig);
   nl = copy_nodes(nl); // so it won't affect the graph
 
   TAB_table degree = degreeTable(nl);
 
-  make_worklist(ig);
 
   // it's assumed not delete any node.
   // now nl doesn't have any pre-colored node.
   nl = except_precolor(nl, regs);
 
-  static string colors[6] = { "%eax", "%ebx", "%ecx", "%edx", "%esi", "%edi" };
-
-  G_nodeList spilllist = NULL;
-  while (!simplify_worklist && !worklist_moves && !freeze_worklist &&
-         !spill_worklist) {
+  make_worklist(ig);
+  select_stack = NULL;
+  while (simplify_worklist || worklist_moves || freeze_worklist ||
+         spill_worklist) {
     if (simplify_worklist)
       simplify();
     else if (worklist_moves)
@@ -317,9 +316,7 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
       select_spill(degree);
   }
 
-  assign_colors();
-
-  ret.spills = nl2tl(spilllist);
+  ret.spills = assign_colors(initial);
   ret.coloring = initial;
 
   printf("dump coloring map:\n");
