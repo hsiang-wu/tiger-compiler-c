@@ -135,3 +135,17 @@ void Temp_printList(Temp_tempList tl)
     Temp_print(tl->head);
   }
 }
+
+bool
+inList(Temp_tempList tl, Temp_temp t)
+{
+  for (; tl; tl = tl->tail) {
+    if (tl->head == t) return TRUE;
+  }
+  return FALSE;
+}
+
+int Temp_num(Temp_temp t)
+{
+  return t->num;
+}

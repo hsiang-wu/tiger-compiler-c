@@ -13,17 +13,7 @@
 
 static Temp_tempList except(Temp_tempList t1, Temp_tempList t2);
 static Temp_tempList unionn(Temp_tempList t1, Temp_tempList t2);
-static bool inList(Temp_tempList tl, Temp_temp t);
 static bool equals(Temp_tempList t1, Temp_tempList t2);
-
-static bool
-inList(Temp_tempList tl, Temp_temp t)
-{
-  for (; tl; tl = tl->tail) {
-    if (tl->head == t) return TRUE;
-  }
-  return FALSE;
-}
 
 // t1 == t2
 static bool
@@ -133,17 +123,18 @@ createInOutTable(G_graph flow, G_table in, G_table out)
        * equation 2
        */
       G_nodeList succ = G_succ(nl->head);
-
       for (; succ; succ = succ->tail) {
         outtl = unionn(outtl, (Temp_tempList)G_look(in, succ->head));
+        // make 0 live range interfere
+        outtl = unionn(outtl, FG_def(nl->head));
       }
       G_enter(out, nl->head, outtl); // update out-table
 
-//        printInsNode(G_nodeInfo(nl->head)); // FG 
+      //        printInsNode(G_nodeInfo(nl->head)); // FG
 
-       //printf("out:\n");
-       //Temp_printList(outtl);
-       //printf("\n");
+      // printf("out:\n");
+      // Temp_printList(outtl);
+      // printf("\n");
       /*
        * repeat until in = in1, out = out1
        */
@@ -152,13 +143,13 @@ createInOutTable(G_graph flow, G_table in, G_table out)
       }
       // printf(".");
     }
-//     printf("=====\n");
+    //     printf("=====\n");
   }
-//  printf("last in:\n");
-//  Temp_printList(G_look(in, tl->head));
-//  printf("last out:\n");
-//  Temp_printList(G_look(out, tl->head));
-//  printf("\n");
+  //  printf("last in:\n");
+  //  Temp_printList(G_look(in, tl->head));
+  //  printf("last out:\n");
+  //  Temp_printList(G_look(out, tl->head));
+  //  printf("\n");
 }
 
 static G_graph
@@ -226,18 +217,18 @@ inteferenceGraph(G_nodeList nl, G_table liveMap)
     //    G_addEdge(dst, t);
     //  }
     //} else {
-    
-       // printInsNode(G_nodeInfo(nl->head)); // FG 
 
-       ////printf("in:\n");
-       ////Temp_printList(intl);
-       //printf("out:\n");
-       //Temp_printList(liveouts);
-       //printf("\n");
+    // printInsNode(G_nodeInfo(nl->head)); // FG
+
+    ////printf("in:\n");
+    ////Temp_printList(intl);
+    // printf("out:\n");
+    // Temp_printList(liveouts);
+    // printf("\n");
 
     for (; defs; defs = defs->tail) {
       //   assert(i->kind == I_OPER || i->kind == I_LABEL);
-      //   XXX:must place it here!!! 
+      //   XXX:must place it here!!!
       //   otherwise second defs will get empty
       //   liveouts.
       Temp_tempList liveouts = G_look(liveMap, nl->head);
@@ -248,10 +239,10 @@ inteferenceGraph(G_nodeList nl, G_table liveMap)
 
         if (dst == t) continue;
         G_addEdge(dst, t);
-//        printf("add edge:\n");
-//        Temp_print(liveouts->head);
-//        Temp_print(defs->head);
-//        printf("---\n");
+        //        printf("add edge:\n");
+        //        Temp_print(liveouts->head);
+        //        Temp_print(defs->head);
+        //        printf("---\n");
       }
     }
     //}

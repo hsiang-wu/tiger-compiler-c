@@ -28,6 +28,16 @@ L(Temp_temp h, Temp_tempList t)
   return Temp_TempList(h, t);
 }
 
+static Temp_tempList
+copyL(Temp_tempList tl)
+{
+  Temp_tempList r = NULL;
+  for (; tl; tl = tl->tail) {
+    r = L(tl->head, r);
+  }
+  return r;
+}
+
 static AS_instrList iList = NULL, last = NULL;
 static void
 emit(AS_instr inst)
@@ -37,24 +47,28 @@ emit(AS_instr inst)
   else
     last = iList = AS_InstrList(inst, NULL);
 
-  /* after def, immediate use */
-  switch (inst->kind) {
-    case I_OPER:
-      if (inst->u.OPER.dst) {
-        AS_instr pseudo_use = AS_Oper("", NULL, inst->u.OPER.dst, NULL);
-        last = last->tail = AS_InstrList(pseudo_use, NULL);
-      }
-      break;
-    case I_MOVE:
-      if (inst->u.MOVE.dst) {
-        AS_instr pseudo_use = AS_Oper("", NULL, inst->u.MOVE.dst, NULL);
-        last = last->tail = AS_InstrList(pseudo_use, NULL);
-      }
-      break;
-    case I_LABEL:
-      break;
-      // do nothing
-  }
+  /* after def, immediate use
+   * Moved to flowgraph
+   * */
+  // switch (inst->kind) {
+  //  case I_OPER:
+  //    if (inst->u.OPER.dst) {
+  //      AS_instr pseudo_use = AS_Oper("", NULL, copyL(inst->u.OPER.dst),
+  //      NULL);
+  //      last = last->tail = AS_InstrList(pseudo_use, NULL);
+  //    }
+  //    break;
+  //  case I_MOVE:
+  //    if (inst->u.MOVE.dst) {
+  //      AS_instr pseudo_use = AS_Oper("", NULL, copyL(inst->u.MOVE.dst),
+  //      NULL);
+  //      last = last->tail = AS_InstrList(pseudo_use, NULL);
+  //    }
+  //    break;
+  //  case I_LABEL:
+  //    break;
+  //    // do nothing
+  //}
 }
 
 AS_instrList
@@ -102,7 +116,8 @@ munchExp(T_exp e)
           if (lt->kind == T_CONST) {
             i = lt->u.CONST;
             e1 = rt;
-          } else {
+          }
+          else {
             assert(rt->kind == T_CONST);
             i = rt->u.CONST;
             e1 = lt;
@@ -143,7 +158,8 @@ munchExp(T_exp e)
               //                   movl %%eax, `d0\n", lt->u.CONST);
             //  emit(AS_Oper(buffer, L(r, NULL), NULL, NULL));
             //  return r;
-          } else {
+          }
+          else {
             sprintf(buffer, "\tmovl\t`s0, `d0\n");
             emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), NULL), NULL));
 
@@ -198,12 +214,13 @@ munchExp(T_exp e)
           buffer = checked_malloc(BLEN);
           sprintf(buffer, "\tidiv\t`s0\n");
           AS_instr debug =
-            AS_Oper(buffer, L(F_RV(),NULL), L(rtmp, L(F_RV(), NULL)), NULL);
+            AS_Oper(buffer, L(F_RV(), NULL), L(rtmp, L(F_RV(), NULL)), NULL);
           emit(debug);
-          //sprintf(buffer, "\tmovl\t`s0, `d0\n\tcltd\n\tidiv\t`s1\n");
-          //AS_instr div =
-          //  AS_Oper(buffer, L(F_RV(), L(F_DIV(), NULL)), L(ltmp, L(rtmp, /*L(F_RV(),*/ NULL)), NULL);
-          //emit(div);
+          // sprintf(buffer, "\tmovl\t`s0, `d0\n\tcltd\n\tidiv\t`s1\n");
+          // AS_instr div =
+          //  AS_Oper(buffer, L(F_RV(), L(F_DIV(), NULL)), L(ltmp, L(rtmp,
+          //  /*L(F_RV(),*/ NULL)), NULL);
+          // emit(div);
           return F_RV(); // result in %eax
         }
         default:
@@ -282,7 +299,8 @@ munchStm(T_stm s)
                 assert(rt->kind != T_CONST); // XXX: is this correct?
                 i = lt->u.CONST;
                 e1 = rt;
-              } else {
+              }
+              else {
                 i = rt->u.CONST;
                 e1 = lt;
               }
@@ -310,8 +328,8 @@ munchStm(T_stm s)
               // only for move off(%reg), %dst
               (mem->u.BINOP.left->kind == T_CONST ||
                mem->u.BINOP.right->kind == T_CONST)) {
-            // make this special case because it's a must 
-            // for callee save register restoring. 
+            // make this special case because it's a must
+            // for callee save register restoring.
             // i.e. movl -12(%ebp), %edi
             // It'll other wise have a register in middle.
             assert(mem->u.BINOP.op == T_plus);
@@ -321,7 +339,8 @@ munchStm(T_stm s)
               assert(rt->kind != T_CONST);
               i = lt->u.CONST;
               e1 = rt;
-            } else {
+            }
+            else {
               i = rt->u.CONST;
               e1 = lt;
             } // e1 = ebp.  e2 = edi

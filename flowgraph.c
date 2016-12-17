@@ -67,7 +67,8 @@ FG_addJumps(TAB_table t, G_node n)
     neighbour = (G_node)TAB_look(t, tl->head);
     if (neighbour) {
       if (!G_goesTo(n, neighbour)) G_addEdge(n, neighbour);
-    } else {
+    }
+    else {
       printf("can't find label %s\n", S_name(tl->head));
       assert(0);
     }
@@ -105,6 +106,37 @@ printInsNode(void* p)
   }
 }
 
+static G_node
+use_after_def(G_graph g, AS_instr i)
+{
+  Temp_tempList defs = NULL;
+  G_node r = NULL;
+  AS_instr pseudo_i;
+
+  switch (i->kind) {
+    case I_LABEL: {
+      assert(0);
+    }
+    case I_MOVE: // fall through
+      defs = i->u.MOVE.dst;
+      // insert use after def.
+      if (defs) {
+        pseudo_i = AS_Move("", NULL, defs);
+        r = G_Node(g, pseudo_i);
+      }
+      break;
+    case I_OPER: {
+      defs = i->u.OPER.dst;
+      if (defs) {
+        pseudo_i = AS_Oper("", NULL, defs, NULL);
+        r = G_Node(g, pseudo_i);
+      }
+      break;
+    }
+  }
+  return r;
+}
+
 G_graph
 FG_AssemFlowGraph(AS_instrList il, F_frame f)
 {
@@ -127,6 +159,15 @@ FG_AssemFlowGraph(AS_instrList il, F_frame f)
       case I_MOVE: // fall through
       case I_OPER: {
         nodes = G_NodeList(curr, nodes);
+        // create a pseudo use after def,
+        // so that 0-length live range
+        // DO interfere with others.
+        // G_node uad = use_after_def(g, i);
+        // uad = NULL;
+        // if (uad) {
+        //  G_addEdge(curr, uad);
+        //  curr = uad;
+        //}
         break;
       }
     }

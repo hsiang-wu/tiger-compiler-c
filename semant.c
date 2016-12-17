@@ -443,8 +443,8 @@ transDec(S_table venv, S_table tenv, A_dec d, Tr_level level, Tr_exp brk)
       struct expty e = transExp(venv, tenv, d->u.var.init, level, brk);
       // to test spill. make more escapes.
       // change this back for correctness
-      //E_enventry eentry = E_VarEntry(Tr_allocLocal(level, TRUE), e.ty);
-      E_enventry eentry = E_VarEntry(Tr_allocLocal(level, FALSE), e.ty);
+      E_enventry eentry = E_VarEntry(Tr_allocLocal(level, TRUE), e.ty);
+//      E_enventry eentry = E_VarEntry(Tr_allocLocal(level, FALSE), e.ty);
 
       Ty_ty ty;
       if (d->u.var.typ == NULL) {

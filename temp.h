@@ -45,4 +45,10 @@ Temp_map Temp_name(void);
 Temp_tempList Temp_copyList(Temp_tempList tl);
 void Temp_print(void*);
 void Temp_printList(Temp_tempList);
+bool inList(Temp_tempList tl, Temp_temp t);
+
+// It's general bad practice to provide
+// this interface maybe. But this makes life easier..
+// and is only used in regalloc::heuristic.
+int Temp_num(Temp_temp);
 #endif
