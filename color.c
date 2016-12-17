@@ -56,8 +56,9 @@ degreeTable(G_nodeList nl)
                          // node-int map
 
   for (; nl; nl = nl->tail) {
+//    assert(nl->head == t2n(n2t(nl->head)));
     TAB_enter(degree_, nl->head, (void*)G_degree(nl->head));
-    // printf("node:%p.degree:%d\n", nl->head, G_degree(nl->head));
+    printf("node:%p.degree:%d\n", nl->head, G_degree(nl->head));
   }
   return degree_;
 }
@@ -67,7 +68,8 @@ decre_degree(G_node n)
 {
   intptr_t newd = (intptr_t)TAB_look(degree_, n) - 1;
   TAB_enter(degree_, n, (void*)newd);
-  if (newd == K) {
+//  assert(newd >= 0);
+  if (newd == K-1) {
     deletee(&spill_worklist, n2t(n));
 
     add(&simplify_worklist, n2t(n));
@@ -185,8 +187,9 @@ heuristic(Temp_temp t, TAB_table degree)
   //// newly created temp(in rewriting phase) will have
   //// higher heuristic and thus less likely to be chosen and
   //// rewrite again.
+
   double v = Temp_num(t) + 100.0 / (intptr_t)TAB_look(degree, n);
-  printf("heuristic: %f |", v);
+  printf("heuristic: %f degree: %d |", v, (intptr_t)TAB_look(degree, n));
   Temp_print(t);
   return v;
 }
@@ -266,7 +269,7 @@ make_worklist(G_graph g)
   simplify_worklist = worklist_moves = freeze_worklist = spill_worklist = NULL;
   G_nodeList nl = G_nodes(g);
   for (; nl; nl = nl->tail) {
-    if (G_degree(nl->head) >= K) {
+    if (G_degree(nl->head) < K) {
       add(&simplify_worklist, n2t(nl->head));
       printf("add to simplify_worklist\n");
     } else {
@@ -293,7 +296,6 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
 
 
   G_nodeList nl = G_nodes(ig);
-  nl = copy_nodes(nl); // so it won't affect the graph
 
   TAB_table degree = degreeTable(nl);
 
