@@ -218,8 +218,8 @@ select_spill(TAB_table degree)
 static void
 assign_colors()
 {
-  while (stack) {
-    G_node n = pop_stack(&stack);
+  while (select_stack) {
+    G_node n = pop_stack(&select_stack);
 
     printf("look...");
     Temp_print(G_nodeInfo(n));
