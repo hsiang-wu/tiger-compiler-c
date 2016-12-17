@@ -68,7 +68,7 @@ decre_degree(G_node n)
 {
   intptr_t newd = (intptr_t)TAB_look(degree_, n) - 1;
   TAB_enter(degree_, n, (void*)newd);
-//  assert(newd >= 0);
+//  assert(newd >= 0); // XXX:this is an error..
   if (newd == K-1) {
     deletee(&spill_worklist, n2t(n));
 
