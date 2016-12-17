@@ -12,10 +12,9 @@ typedef struct Temp_temp_* Temp_temp;
 Temp_temp Temp_newtemp(void);
 
 typedef struct Temp_tempList_* Temp_tempList;
-struct Temp_tempList_
-{
-  Temp_temp head;
-  Temp_tempList tail;
+struct Temp_tempList_ {
+    Temp_temp head;
+    Temp_tempList tail;
 };
 Temp_tempList Temp_TempList(Temp_temp h, Temp_tempList t);
 
@@ -25,10 +24,9 @@ Temp_label Temp_namedlabel(string name);
 string Temp_labelstring(Temp_label s);
 
 typedef struct Temp_labelList_* Temp_labelList;
-struct Temp_labelList_
-{
-  Temp_label head;
-  Temp_labelList tail;
+struct Temp_labelList_ {
+    Temp_label head;
+    Temp_labelList tail;
 };
 Temp_labelList Temp_LabelList(Temp_label h, Temp_labelList t);
 
@@ -46,6 +44,11 @@ Temp_tempList Temp_copyList(Temp_tempList tl);
 void Temp_print(void*);
 void Temp_printList(Temp_tempList);
 bool inList(Temp_tempList tl, Temp_temp t);
+Temp_tempList unionn(Temp_tempList t1, Temp_tempList t2);
+Temp_tempList except(Temp_tempList t1, Temp_tempList t2);
+void deletee(Temp_tempList* t1, Temp_temp t);
+void add(Temp_tempList* t1, Temp_temp t);
+bool equals(Temp_tempList t1, Temp_tempList t2);
 
 // It's general bad practice to provide
 // this interface maybe. But this makes life easier..

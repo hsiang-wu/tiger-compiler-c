@@ -11,55 +11,6 @@
 #include "util.h"
 #include <stdio.h>
 
-static Temp_tempList except(Temp_tempList t1, Temp_tempList t2);
-static Temp_tempList unionn(Temp_tempList t1, Temp_tempList t2);
-static bool equals(Temp_tempList t1, Temp_tempList t2);
-
-// t1 == t2
-static bool
-equals(Temp_tempList t1, Temp_tempList t2)
-{
-  Temp_tempList tmp = t1;
-  for (; t2; t2 = t2->tail, t1 = t1->tail) {
-    if (!inList(tmp, t2->head)) return FALSE;
-    if (!t1) return FALSE; // t1 too short
-  }
-  if (t1) return FALSE; // t1 too long
-
-  return TRUE;
-}
-
-// t1 - t2
-static Temp_tempList
-except(Temp_tempList t1, Temp_tempList t2)
-{
-  if (!t2) return t1;
-
-  Temp_tempList r = NULL;
-  for (; t1; t1 = t1->tail) {
-    if (!inList(t2, t1->head)) r = Temp_TempList(t1->head, r);
-  }
-  return r;
-}
-
-// t1 U t2
-static Temp_tempList
-unionn(Temp_tempList t1, Temp_tempList t2)
-{
-  if (!t1) return t2;
-
-  Temp_tempList r = Temp_copyList(t1);
-  // assert(equals(r, t1));
-  for (; t2; t2 = t2->tail) {
-    if (!t1 || !inList(t1, t2->head)) r = Temp_TempList(t2->head, r);
-  }
-
-  // printf("union result :\n");
-  // Temp_printList(r);
-
-  return r;
-}
-
 Live_moveList
 Live_MoveList(G_node src, G_node dst, Live_moveList tail)
 {
