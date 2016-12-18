@@ -17,9 +17,6 @@
 #include "flowgraph.h"
 
 static double heuristic(Temp_temp t);
-static void init_usesdefs(AS_instrList il);
-static TAB_table tempuse_;
-static TAB_table tempdef_;
 static void insert_after(AS_instrList il, AS_instr i);
 static void rewrite_inst(Temp_tempList tl, Temp_temp oldt, Temp_temp newt);
 
@@ -44,49 +41,6 @@ rewrite_inst(Temp_tempList tl, Temp_temp oldt, Temp_temp newt)
     }
   }
   assert(D_found);
-}
-
-static int
-temp_uses(Temp_temp t)
-{
-  return (intptr_t)TAB_look(tempuse_, t);
-}
-static int
-temp_defs(Temp_temp t)
-{
-  return (intptr_t)TAB_look(tempdef_, t);
-}
-
-void
-init_usesdefs(AS_instrList il)
-{
-  AS_instr i;
-  Temp_tempList uses;
-  Temp_tempList defs;
-  tempuse_ = TAB_empty();
-  tempdef_ = TAB_empty();
-  for (; il; il = il->tail) {
-    i = il->head;
-    switch (i->kind) {
-      case I_MOVE: // fall through
-        uses = i->u.MOVE.src;
-        defs = i->u.MOVE.dst;
-        break;
-      case I_OPER: {
-        uses = i->u.OPER.src;
-        defs = i->u.OPER.dst;
-        break;
-      }
-      case I_LABEL:
-        continue;
-    }
-    for (; uses; uses = uses->tail) {
-      TAB_enter(tempuse_, uses->head, TAB_look(tempuse_, uses->head) + 1);
-    }
-    for (; defs; defs = defs->tail) {
-      TAB_enter(tempdef_, defs->head, TAB_look(tempdef_, defs->head) + 1);
-    }
-  }
 }
 
 enum { AS_USE, AS_DEF };

@@ -1,6 +1,8 @@
 #include "color.h"
 #include "table.h"
 
+#include "flowgraph.h"
+
 #include "string.h"
 #include <stdint.h>
 
@@ -16,6 +18,7 @@ static G_node t2n(Temp_temp temp);
 #define n2t(node) G_nodeInfo(node)
 static void push_stack(G_nodeList* stack, G_node t);
 static void decre_degree(G_node);
+static void init_usesdefs(AS_instrList il);
 static Temp_tempList assign_colors(Temp_map tmap);
 
 // In printf(...), "%%" for "%". In char * consts, "%" for "%".
@@ -64,7 +67,8 @@ degreeTable(G_nodeList nl)
 
   for (; nl; nl = nl->tail) {
     //    assert(nl->head == t2n(n2t(nl->head)));
-    TAB_enter(degree_, nl->head, (void*) (intptr_t) G_degree(nl->head)); // to appease compiler warnings..
+    TAB_enter(degree_, nl->head, (void*)(intptr_t)G_degree(
+                                   nl->head)); // to appease compiler warnings..
     printf("node:%p.degree:%d\n", nl->head, G_degree(nl->head));
   }
   return degree_;
@@ -191,14 +195,15 @@ heuristic(Temp_temp t, TAB_table degree)
 {
   assert(t);
   G_node n = t2n(t);
-  // int uses_defs = temp_uses(t) + temp_defs(t); // uses and defs in flowgraph
+  int uses_defs = temp_uses(t) + temp_defs(t); // uses and defs in flowgraph
 
   //// adding t->num into consideration is a hack so that
   //// newly created temp(in rewriting phase) will have
   //// higher heuristic and thus less likely to be chosen and
   //// rewrite again.
 
-  double v = Temp_num(t) + 100.0 / (intptr_t)TAB_look(degree, n);
+  // double v = 0.2 * Temp_num(t) + 100.0 / (intptr_t)TAB_look(degree, n);
+  double v = 1.0 * uses_defs / (intptr_t)TAB_look(degree, n);
   printf("heuristic: %f degree: %ld |", v, (intptr_t)TAB_look(degree, n));
   Temp_print(t);
   return v;

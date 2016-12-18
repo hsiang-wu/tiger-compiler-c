@@ -9,6 +9,7 @@
 #include "temp.h"
 #include "tree.h"
 #include "util.h"
+#include <stdint.h>
 #include <stdio.h>
 
 Temp_tempList
@@ -137,6 +138,53 @@ use_after_def(G_graph g, AS_instr i)
   return r;
 }
 
+// Used in color.c for heuristic
+static TAB_table tempuse_;
+static TAB_table tempdef_;
+int
+temp_uses(Temp_temp t)
+{
+  return (intptr_t)TAB_look(tempuse_, t);
+}
+
+int
+temp_defs(Temp_temp t)
+{
+  return (intptr_t)TAB_look(tempdef_, t);
+}
+
+void
+init_usesdefs(AS_instrList il)
+{
+  AS_instr i;
+  Temp_tempList uses;
+  Temp_tempList defs;
+  tempuse_ = TAB_empty();
+  tempdef_ = TAB_empty();
+  for (; il; il = il->tail) {
+    i = il->head;
+    switch (i->kind) {
+      case I_MOVE: // fall through
+        uses = i->u.MOVE.src;
+        defs = i->u.MOVE.dst;
+        break;
+      case I_OPER: {
+        uses = i->u.OPER.src;
+        defs = i->u.OPER.dst;
+        break;
+      }
+      case I_LABEL:
+        continue;
+    }
+    for (; uses; uses = uses->tail) {
+      TAB_enter(tempuse_, uses->head, TAB_look(tempuse_, uses->head) + 1);
+    }
+    for (; defs; defs = defs->tail) {
+      TAB_enter(tempdef_, defs->head, TAB_look(tempdef_, defs->head) + 1);
+    }
+  }
+}
+
 G_graph
 FG_AssemFlowGraph(AS_instrList il, F_frame f)
 {
@@ -145,6 +193,9 @@ FG_AssemFlowGraph(AS_instrList il, F_frame f)
   G_node curr = NULL, prev = NULL;
   G_nodeList nodes = NULL;
   TAB_table label_tb = TAB_empty();
+
+  // used in color.c
+  init_usesdefs(il);
 
   AS_instr i;
   for (; il; il = il->tail) {
