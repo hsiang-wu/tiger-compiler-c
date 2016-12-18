@@ -34,15 +34,22 @@ REGDEC(ebp);
 /*Lab5: Your implementation here.*/
 const int F_wordSize = 4;
 
-struct F_frame_ {
+struct F_frame_
+{
   Temp_label name;
   F_accessList accessList;
   int off;
 };
 
-struct F_access_ {
-  enum { inFrame, inReg } kind;
-  union {
+struct F_access_
+{
+  enum
+  {
+    inFrame,
+    inReg
+  } kind;
+  union
+  {
     int offset;    /* InFrame */
     Temp_temp reg; /* InReg */
   } u;
@@ -214,7 +221,7 @@ F_procEntryExit1(F_frame frame, T_stm stm)
 
   // TRUE: always move to stack
   // FALSE: only to stack when there's high register pressure  (during spilling)
-  bool tostack = FALSE;
+  bool tostack = TRUE;
 
   F_access f_ebx = F_allocLocal(frame, tostack); // place callee-save registers
   F_access f_esi = F_allocLocal(frame, tostack); // place callee-save registers
@@ -263,8 +270,7 @@ F_Exp(F_access acc, T_exp framePtr)
 {
   if (acc->kind == inFrame) {
     return T_Mem(T_Binop(T_plus, framePtr, T_Const(acc->u.offset)));
-  }
-  else { // in register
+  } else { // in register
     return T_Temp(acc->u.reg);
   }
 }
@@ -273,18 +279,18 @@ T_exp
 F_externalCall(string str, T_expList args)
 {
 
-  // T_stm passparam = NULL;
-  // for (; args; args=args->tail) { // reverse the reverse. a stack shuold be
-  // arg3..arg2..arg1..eip..ebp
-  //  if (!passparam) {
-  //    passparam = T_Push(args->head);
-  //  } else {
-  //    passparam = T_Seq(passparam, T_Push(args->head));
-  //  }
-  //}
+// T_stm passparam = NULL;
+// for (; args; args=args->tail) { // reverse the reverse. a stack shuold be
+// arg3..arg2..arg1..eip..ebp
+//  if (!passparam) {
+//    passparam = T_Push(args->head);
+//  } else {
+//    passparam = T_Seq(passparam, T_Push(args->head));
+//  }
+//}
 
 #ifdef __APPLE__
-  char *buffer = checked_malloc(64);
+  char* buffer = checked_malloc(64);
   buffer[0] = '_';
   buffer[1] = '\0';
   strcat(buffer, str);

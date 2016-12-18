@@ -43,7 +43,11 @@ rewrite_inst(Temp_tempList tl, Temp_temp oldt, Temp_temp newt)
   assert(D_found);
 }
 
-enum { AS_USE, AS_DEF };
+enum
+{
+  AS_USE,
+  AS_DEF
+};
 static void
 rewrite(Temp_temp spill, AS_instrList il, F_frame f)
 {
@@ -85,6 +89,10 @@ rewrite(Temp_temp spill, AS_instrList il, F_frame f)
           sprintf(buffer, "movl %d(%%ebp), `d0 #spill\n", F_frameOffset(inmem));
           printf("%s%d\n", buffer, Temp_num(t0));
           insert_after(last, AS_Oper(buffer, L(t0, NULL), NULL, NULL));
+
+          // help select_spill() avoid choosing this
+          // newly created temps.
+          COL_add_newly_created(t0);
         }
         // replace spill with t0 in the remaining of uses list.
         break;
@@ -102,16 +110,7 @@ rewrite(Temp_temp spill, AS_instrList il, F_frame f)
         insert_after(il, AS_Oper(buffer, NULL, L(t0, NULL), NULL));
         printf("%s%d\n", buffer, Temp_num(t0));
 
-        //// usually there's a empty use immedieatly after each def.
-        //// refer to codegen.c : emit().
-        // assert(il->tail);
-        // assert(il->tail->head);
-        // assert(il->tail->head->u.OPER.src);
-        // rewrite_inst(il->tail->head->u.OPER.src, spill, t0);
-
-        // so insert after that
-        // move it to memory
-        // replace spill with t0 in the remaining of uses list.
+        COL_add_newly_created(t0);
         break;
       }
     }

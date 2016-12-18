@@ -103,8 +103,7 @@ delete_node(G_nodeList* nl, G_nodeList last, TAB_table degree)
   if (last) { // remove this node
     tmp = last->tail->head;
     last->tail = last->tail->tail;
-  }
-  else {
+  } else {
     tmp = (*nl)->head;
     *nl = (*nl)->tail;
   }
@@ -169,12 +168,10 @@ except_precolor(G_nodeList nl, Temp_tempList precolored)
     if (!inList(precolored, reg)) {
       if (newnl) {
         newnl = newnl->tail = G_NodeList(nl->head, NULL);
-      }
-      else {
+      } else {
         head = newnl = G_NodeList(nl->head, NULL);
       }
-    }
-    else {
+    } else {
       printf("delete:");
       Temp_print(reg);
     }
@@ -188,6 +185,15 @@ static G_node
 t2n(Temp_temp temp)
 {
   return (G_node)TAB_look(tempMap, temp);
+}
+
+// Resulting from previously spilled registers.
+// Should avoid choosing them
+static Temp_tempList newly_created = NULL;
+void
+COL_add_newly_created(Temp_temp t)
+{
+  newly_created = Temp_TempList(t, newly_created);
 }
 
 static double
@@ -216,6 +222,17 @@ select_spill(TAB_table degree)
   Temp_tempList tl = spill_worklist;
   Temp_temp mintemp;
   double minval = -1, val;
+
+  // avoid choosing from new temps
+  // resulting from previously spilled
+  // registers.
+  tl = except(tl, newly_created);
+  if (!tl) {
+    // so we have to choose from them...
+    tl = newly_created;
+    newly_created = NULL;
+    assert(0 && "I don't want to see that..");
+  }
 
   for (; tl; tl = tl->tail) {
     val = heuristic(tl->head, degree);
@@ -287,8 +304,7 @@ make_worklist(G_graph g)
     if (G_degree(nl->head) < K) {
       add(&simplify_worklist, n2t(nl->head));
       printf("add to simplify_worklist\n");
-    }
-    else {
+    } else {
       add(&spill_worklist, n2t(nl->head));
       printf("add to spill_worklist\n");
     }
@@ -333,7 +349,9 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
   }
 
   ret.spills = assign_colors(initial);
+
   ret.coloring = initial;
+  unionn(newly_created, ret.spills);
 
   printf("dump coloring map:\n");
   Temp_dumpMap(stdout, ret.coloring);
