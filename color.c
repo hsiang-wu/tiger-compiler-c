@@ -18,6 +18,7 @@ static void push_stack(G_nodeList* stack, G_node t);
 static void decre_degree(G_node);
 static Temp_tempList assign_colors(Temp_map tmap);
 
+// In printf(...), "%%" for "%". In char * consts, "%" for "%".
 static string colors[6] = { "%eax", "%ebx", "%ecx", "%edx", "%esi", "%edi" };
 
 static void
@@ -32,6 +33,12 @@ coaslesce()
   assert(0 && "not implemented!");
 }
 
+static G_nodeList
+adjacent(G_node n)
+{
+  return G_except(G_adj(n), select_stack);
+}
+
 static void
 simplify()
 {
@@ -39,7 +46,7 @@ simplify()
   G_node n = t2n(t);
   deletee(&simplify_worklist, t);
   push_stack(&select_stack, n);
-  G_nodeList adjs = G_adj(n);
+  G_nodeList adjs = adjacent(n);
   for (; adjs; adjs = adjs->tail) {
     decre_degree(adjs->head);
   }
@@ -56,8 +63,8 @@ degreeTable(G_nodeList nl)
                          // node-int map
 
   for (; nl; nl = nl->tail) {
-//    assert(nl->head == t2n(n2t(nl->head)));
-    TAB_enter(degree_, nl->head, (void*)G_degree(nl->head));
+    //    assert(nl->head == t2n(n2t(nl->head)));
+    TAB_enter(degree_, nl->head, G_degree(nl->head));
     printf("node:%p.degree:%d\n", nl->head, G_degree(nl->head));
   }
   return degree_;
@@ -68,8 +75,8 @@ decre_degree(G_node n)
 {
   intptr_t newd = (intptr_t)TAB_look(degree_, n) - 1;
   TAB_enter(degree_, n, (void*)newd);
-//  assert(newd >= 0); // XXX:this is an error..
-  if (newd == K-1) {
+  //  assert(newd >= 0); // XXX:this is an error..
+  if (newd == K - 1) {
     deletee(&spill_worklist, n2t(n));
 
     add(&simplify_worklist, n2t(n));
@@ -92,7 +99,8 @@ delete_node(G_nodeList* nl, G_nodeList last, TAB_table degree)
   if (last) { // remove this node
     tmp = last->tail->head;
     last->tail = last->tail->tail;
-  } else {
+  }
+  else {
     tmp = (*nl)->head;
     *nl = (*nl)->tail;
   }
@@ -157,10 +165,12 @@ except_precolor(G_nodeList nl, Temp_tempList precolored)
     if (!inList(precolored, reg)) {
       if (newnl) {
         newnl = newnl->tail = G_NodeList(nl->head, NULL);
-      } else {
+      }
+      else {
         head = newnl = G_NodeList(nl->head, NULL);
       }
-    } else {
+    }
+    else {
       printf("delete:");
       Temp_print(reg);
     }
@@ -272,7 +282,8 @@ make_worklist(G_graph g)
     if (G_degree(nl->head) < K) {
       add(&simplify_worklist, n2t(nl->head));
       printf("add to simplify_worklist\n");
-    } else {
+    }
+    else {
       add(&spill_worklist, n2t(nl->head));
       printf("add to spill_worklist\n");
     }
@@ -294,11 +305,9 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
   // K = 7;
   printf("K=%d\n", K);
 
-
   G_nodeList nl = G_nodes(ig);
 
   TAB_table degree = degreeTable(nl);
-
 
   // it's assumed not delete any node.
   // now nl doesn't have any pre-colored node.
