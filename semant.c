@@ -1,6 +1,7 @@
 #include "semant.h"
 
-struct expty {
+struct expty
+{
   Tr_exp exp;
   Ty_ty ty;
 };
@@ -117,8 +118,7 @@ transExp(S_table venv, S_table tenv, A_exp a, Tr_level level, Tr_exp brk)
         if (el == NULL) {
           EM_error(a->pos, "Too few arguments.");
           return expTy(Tr_constVar(0), Ty_Nil());
-        }
-        else {
+        } else {
           tmp = transExp(venv, tenv, el->head, level, brk);
           if (formals->head != tmp.ty) EM_error(a->pos, "para type mismatch");
         }
@@ -130,8 +130,7 @@ transExp(S_table venv, S_table tenv, A_exp a, Tr_level level, Tr_exp brk)
         EM_error(a->pos, "too many params in function %s",
                  S_name(a->u.call.func));
         return expTy(Tr_constVar(0), et->u.fun.result);
-      }
-      else {
+      } else {
         return expTy(Tr_callExp(et->u.fun.label,
                                 /* call tr_formals will get the formals */
                                 et->u.fun.level, level, telr),
@@ -153,19 +152,16 @@ transExp(S_table venv, S_table tenv, A_exp a, Tr_level level, Tr_exp brk)
         }
         // arithmatic return.
         return expTy(Tr_arithExp(oper, left.exp, right.exp), Ty_Int());
-      }
-      else if (left.ty->kind != right.ty->kind && left.ty != Ty_Nil() &&
-               right.ty != Ty_Nil()) {
+      } else if (left.ty->kind != right.ty->kind && left.ty != Ty_Nil() &&
+                 right.ty != Ty_Nil()) {
         EM_error(a->u.op.left->pos, "same type required");
         goto err_ret;
-      }
-      else if (oper != A_eqOp && oper != A_neqOp) { // lt, le, gt, ge
+      } else if (oper != A_eqOp && oper != A_neqOp) { // lt, le, gt, ge
         if (left.ty->kind != Ty_int || right.ty->kind != Ty_int) {
           goto err_comp;
         }
-      }
-      else if (!(left.ty->kind == Ty_int || left.ty->kind == Ty_array ||
-                 left.ty->kind == Ty_record || left.ty->kind == Ty_string)) {
+      } else if (!(left.ty->kind == Ty_int || left.ty->kind == Ty_array ||
+                   left.ty->kind == Ty_record || left.ty->kind == Ty_string)) {
         if (right.ty != Ty_Nil()) {
           goto err_comp;
         }
@@ -173,8 +169,7 @@ transExp(S_table venv, S_table tenv, A_exp a, Tr_level level, Tr_exp brk)
 
       if (left.ty->kind == Ty_string) {
         return expTy(Tr_compString(oper, left.exp, right.exp), Ty_Int());
-      }
-      else {
+      } else {
         // otherwise. comp return
         return expTy(Tr_compExp(oper, left.exp, right.exp), Ty_Int());
       }
@@ -246,8 +241,7 @@ transExp(S_table venv, S_table tenv, A_exp a, Tr_level level, Tr_exp brk)
             EM_error(a->pos, "then exp and else exp type mismatch");
         }
         return expTy(Tr_ifExp(cond.exp, thenet.exp, elseet.exp), thenet.ty);
-      }
-      else if (thenet.ty != Ty_Void()) { // if-then
+      } else if (thenet.ty != Ty_Void()) { // if-then
         EM_error(a->pos, "if-then exp's body must produce no value");
       }
       return expTy(Tr_ifExp(cond.exp, thenet.exp, Tr_nilExp()), thenet.ty);
@@ -268,29 +262,11 @@ transExp(S_table venv, S_table tenv, A_exp a, Tr_level level, Tr_exp brk)
       return expTy(Tr_whileExp(test.exp, body.exp, done), Ty_Void());
     }
     case A_forExp: {
-      dprintf("for! %s\n", S_name(a->u.forr.var));
+      // see A_ForExp(). It's re-written into while.
+      assert(0);
+      //     dprintf("for! %s\n", S_name(a->u.forr.var));
 
-      // rewrite for grammer in while.
-      // XXX: malfunctioned when limit = maxint
-      // or when the name "_limit" is used in program
-      A_var cntvar = A_SimpleVar(0, a->u.forr.var);
-      A_exp cntexp = A_VarExp(0, cntvar);
-      A_exp translated = A_LetExp(
-        0, A_DecList(A_VarDec(0, a->u.forr.var, S_Symbol("int"), a->u.forr.lo),
-                     A_DecList(A_VarDec(0, S_Symbol("_limit"), S_Symbol("int"),
-                                        a->u.forr.hi),
-                               NULL)),
-        A_WhileExp(
-          0, A_OpExp(0, A_leOp, cntexp,
-                     A_VarExp(0, A_SimpleVar(0, S_Symbol("_limit")))),
-          A_SeqExp(
-            0, A_ExpList(
-                 a->u.forr.body,
-                 A_ExpList(A_AssignExp(0, cntvar, A_OpExp(0, A_plusOp, cntexp,
-                                                          A_IntExp(0, 1))),
-                           /* make while produce no value */
-                           A_ExpList(A_NilExp(0), NULL))))));
-      return transExp(venv, tenv, translated, level, brk);
+      //      return transExp(venv, tenv, rewrite_for(a), level, brk);
 
       // a implementation using forexp. but need to implement Tr_forExp()
       // which is not done yet.
@@ -370,8 +346,7 @@ transVar(S_table venv, S_table tenv, A_var v, Tr_level level, Tr_exp brk)
       if (x && x->kind == E_varEntry) {
         Tr_access acc = x->u.var.access;
         return expTy(Tr_simpleVar(acc, level), actual_ty(x->u.var.ty));
-      }
-      else {
+      } else {
         EM_error(v->pos, "undefined variable %s", S_name(v->u.simple));
         return expTy(Tr_constVar(0), Ty_Int());
       }
@@ -405,8 +380,7 @@ transVar(S_table venv, S_table tenv, A_var v, Tr_level level, Tr_exp brk)
         else
           EM_error(v->pos, "field %s doesn't exist", S_name(v->u.field.sym));
         return expTy(Tr_constVar(0), Ty_Int());
-      }
-      else {
+      } else {
         EM_error(v->pos, "not a record type");
         return expTy(Tr_constVar(0), Ty_Int());
       }
@@ -423,8 +397,7 @@ transVar(S_table venv, S_table tenv, A_var v, Tr_level level, Tr_exp brk)
       if (actual_ty(et.ty)->kind == Ty_array) {
         Ty_ty arr = et.ty->u.array;
         return expTy(Tr_subscriptVar(et.exp, etint.exp), arr);
-      }
-      else {
+      } else {
         EM_error(v->pos, "array type required");
         return expTy(Tr_constVar(0), Ty_Int());
       }
@@ -441,17 +414,14 @@ transDec(S_table venv, S_table tenv, A_dec d, Tr_level level, Tr_exp brk)
     case A_varDec: {
       dprintf("dec:vardec:%p %p\n", d->u.var.var, d->u.var.typ);
       struct expty e = transExp(venv, tenv, d->u.var.init, level, brk);
-      // to test spill. make more escapes.
-      // change this back for correctness
-      E_enventry eentry = E_VarEntry(Tr_allocLocal(level, TRUE), e.ty);
-//      E_enventry eentry = E_VarEntry(Tr_allocLocal(level, FALSE), e.ty);
+      E_enventry eentry =
+        E_VarEntry(Tr_allocLocal(level, d->u.var.escape), e.ty);
 
       Ty_ty ty;
       if (d->u.var.typ == NULL) {
         if (e.ty == Ty_Nil())
           EM_error(d->pos, "init should not be nil without type specified");
-      }
-      else if ((ty = S_look(tenv, d->u.var.typ)) != e.ty) {
+      } else if ((ty = S_look(tenv, d->u.var.typ)) != e.ty) {
         if (e.ty != Ty_Nil()) EM_error(d->pos, "type mismatch");
       }
 
@@ -476,8 +446,7 @@ transDec(S_table venv, S_table tenv, A_dec d, Tr_level level, Tr_exp brk)
         if (f->result != NULL) {
           // no new type will be declared in funcdec. It's safe
           resultTy = S_look(tenv, f->result);
-        }
-        else {
+        } else {
           resultTy = Ty_Void();
         }
 
@@ -532,8 +501,7 @@ transDec(S_table venv, S_table tenv, A_dec d, Tr_level level, Tr_exp brk)
           transExp(venv, tenv, f->body, newlev, brk); // not same as book
         if (resultTy == Ty_Void()) {
           if (et.ty != Ty_Void()) EM_error(f->pos, "procedure returns value\n");
-        }
-        else {
+        } else {
           if (et.ty == Ty_Void())
             EM_error(f->pos, "Must return value! %s\n", S_name(fl->head->name));
           else if (et.ty != resultTy)
@@ -565,12 +533,10 @@ transTy(S_table tenv, A_ty a)
       if (a->u.name == S_Symbol("int")) {
         dprintf("type int\n");
         return Ty_Int();
-      }
-      else if (a->u.name == S_Symbol("string")) {
+      } else if (a->u.name == S_Symbol("string")) {
         dprintf("type string\n");
         return Ty_String();
-      }
-      else {
+      } else {
         dprintf("type name\n");
         // Ty_ty ty = S_look(tenv, a->u.name);
         return Ty_Name(a->u.name, NULL); // set to null first
@@ -643,8 +609,7 @@ nametyList(S_table tenv, A_nametyList nl)
   if (ty->kind == Ty_int || ty->kind == Ty_string || ty->kind == Ty_name) {
     dprintf("creating a name type, %s->%d\n", S_name(nl->head->name), ty->kind);
     head = Ty_Name(nl->head->name, ty);
-  }
-  else {
+  } else {
     head = ty;
   }
   S_enter(tenv, nl->head->name,
@@ -710,8 +675,7 @@ checkTypeDec(S_table tenv, Ty_tyList tl)
       //} else {
       if (nty == NULL) {
         EM_error(0, "%%s contains undeclared type" /*, S_name(s)*/);
-      }
-      else {
+      } else {
         ty->u.name.ty = nty;
         S_enter(tenv, ty->u.name.sym, nty);
       }
@@ -751,8 +715,7 @@ checkRecord(S_table tenv, Ty_fieldList fl)
   if (ty) {
     checkRecord(tenv, fl->tail); // move to next
     return;
-  }
-  else {
+  } else {
     EM_error(0, " undefined type %s", S_name(s));
   }
   return;

@@ -9,10 +9,9 @@ typedef struct G_graph_* G_graph; /* The "graph" type */
 typedef struct G_node_* G_node;   /* The "node" type */
 
 typedef struct G_nodeList_* G_nodeList;
-struct G_nodeList_
-{
-  G_node head;
-  G_nodeList tail;
+struct G_nodeList_ {
+    G_node head;
+    G_nodeList tail;
 };
 
 /* Make a new graph */
@@ -70,4 +69,6 @@ void G_enter(G_table t, G_node node, void* value);
 /* Tell what "node" maps to in table "t" */
 void* G_look(G_table t, G_node node);
 
+G_nodeList G_except(G_nodeList n1, G_nodeList n2);
+bool G_inlist(G_nodeList nl, G_node n);
 #endif

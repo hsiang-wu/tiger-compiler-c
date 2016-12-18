@@ -2,23 +2,24 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "util.h"
-#include "symbol.h"
-#include "temp.h"
-#include "table.h"
-#include "tree.h"
 #include "frame.h"
+#include "symbol.h"
+#include "table.h"
+#include "temp.h"
+#include "tree.h"
+#include "util.h"
 
 #define REG_NUMS 6
-#define REGDEC(name) \
-  static Temp_temp name() {\
-    static Temp_temp name = NULL;\
-    if (!name) { \
-      name = Temp_newtemp();\
-      printf(#name"");\
-      Temp_print(name);\
-    }\
-    return name;\
+#define REGDEC(name)                                                           \
+  static Temp_temp name()                                                      \
+  {                                                                            \
+    static Temp_temp name = NULL;                                              \
+    if (!name) {                                                               \
+      name = Temp_newtemp();                                                   \
+      printf(#name "");                                                        \
+      Temp_print(name);                                                        \
+    }                                                                          \
+    return name;                                                               \
   }
 REGDEC(eax);
 REGDEC(ebx);
@@ -40,14 +41,15 @@ struct F_frame_ {
 };
 
 struct F_access_ {
-    enum {inFrame, inReg} kind;
-    union {
-      int offset; /* InFrame */
-      Temp_temp reg; /* InReg */
-    } u;
+  enum { inFrame, inReg } kind;
+  union {
+    int offset;    /* InFrame */
+    Temp_temp reg; /* InReg */
+  } u;
 };
 
-static F_access InFrame(int offset)
+static F_access
+InFrame(int offset)
 {
   F_access access = checked_malloc(sizeof(*access));
   access->kind = inFrame;
@@ -55,7 +57,8 @@ static F_access InFrame(int offset)
   return access;
 }
 
-static F_access InReg(Temp_temp reg)
+static F_access
+InReg(Temp_temp reg)
 {
   F_access access = checked_malloc(sizeof(*access));
   access->kind = inReg;
@@ -63,44 +66,51 @@ static F_access InReg(Temp_temp reg)
   return access;
 }
 
-Temp_label F_name(F_frame f)
+Temp_label
+F_name(F_frame f)
 {
   return f->name;
 }
 
-F_accessList F_formals(F_frame f)
+F_accessList
+F_formals(F_frame f)
 {
   return f->accessList;
 }
 
-F_access F_allocLocal(F_frame f, bool escape)
+F_access
+F_allocLocal(F_frame f, bool escape)
 {
-    if (escape) { /* must be place on stack */
-      f->off -= F_wordSize;
-      printf("frame offset:%d\n", f->off);
-      return InFrame(f->off);
-    } { /* LOL, also put on stack. But CAN be put in register */
-      //f->off -= F_wordSize;
-      //return InFrame(f->off);
-      Temp_temp reg = Temp_newtemp();
-      printf("alloclocal:");
-      Temp_print(reg);
-      return InReg(reg);
-    }
+  if (escape) { /* must be place on stack */
+    f->off -= F_wordSize;
+    printf("frame offset:%d\n", f->off);
+    return InFrame(f->off);
+  }
+  { /* LOL, also put on stack. But CAN be put in register */
+    // f->off -= F_wordSize;
+    // return InFrame(f->off);
+    Temp_temp reg = Temp_newtemp();
+    printf("alloclocal:");
+    Temp_print(reg);
+    return InReg(reg);
+  }
 }
 
-static F_access F_allocParam(F_frame f, bool escape)
+static F_access
+F_allocParam(F_frame f, bool escape)
 {
-    if (escape) { /* must be place on stack */
-      f->off += F_wordSize;
-      printf("frame offset:%d\n", f->off);
-      return InFrame(f->off);
-    } {
-      return InReg(Temp_newtemp());
-    }
+  if (escape) { /* must be place on stack */
+    f->off += F_wordSize;
+    printf("frame offset:%d\n", f->off);
+    return InFrame(f->off);
+  }
+  {
+    return InReg(Temp_newtemp());
+  }
 }
 
-F_frame F_newFrame(Temp_label name, U_boolList formals)
+F_frame
+F_newFrame(Temp_label name, U_boolList formals)
 {
   F_frame frame = checked_malloc(sizeof(*frame));
   frame->name = name;
@@ -120,50 +130,59 @@ F_frame F_newFrame(Temp_label name, U_boolList formals)
     al->tail = checked_malloc(sizeof(*al));
     al = al->tail;
   }
-    printf("  frame:loop tail\n");
+  printf("  frame:loop tail\n");
   al->head = F_allocParam(frame, formals->head);
   al->tail = NULL;
   frame->accessList = head;
-  frame->off = 0; // set to -4, cuz it's > ebp but local vars lives < ebp. and -4(%ebp) is %esp.
+  frame->off = 0; // set to -4, cuz it's > ebp but local vars lives < ebp. and
+                  // -4(%ebp) is %esp.
   return frame;
 }
 
-F_frag F_StringFrag(Temp_label label, string str) {
-    F_frag frg = checked_malloc(sizeof(*frg));
-    frg->kind = F_stringFrag;
-    frg->u.stringg.label = label;
-    frg->u.stringg.str = str;
-	return frg;
+F_frag
+F_StringFrag(Temp_label label, string str)
+{
+  F_frag frg = checked_malloc(sizeof(*frg));
+  frg->kind = F_stringFrag;
+  frg->u.stringg.label = label;
+  frg->u.stringg.str = str;
+  return frg;
 }
 
-F_frag F_ProcFrag(T_stm body, F_frame frame) {
-    F_frag frg = checked_malloc(sizeof(*frg));
-    frg->kind = F_procFrag;
-    frg->u.proc.body = body;
-    frg->u.proc.frame = frame;
-	return frg;
+F_frag
+F_ProcFrag(T_stm body, F_frame frame)
+{
+  F_frag frg = checked_malloc(sizeof(*frg));
+  frg->kind = F_procFrag;
+  frg->u.proc.body = body;
+  frg->u.proc.frame = frame;
+  return frg;
 }
 
-F_fragList F_FragList(F_frag head, F_fragList tail) {
-    F_fragList fl = checked_malloc(sizeof(*fl));
-    fl->head = head;
-    fl->tail = tail;
-	return fl;
+F_fragList
+F_FragList(F_frag head, F_fragList tail)
+{
+  F_fragList fl = checked_malloc(sizeof(*fl));
+  fl->head = head;
+  fl->tail = tail;
+  return fl;
 }
 
-
-Temp_tempList F_CallerSaves()
+Temp_tempList
+F_CallerSaves()
 {
   static Temp_tempList regs = NULL;
   if (!regs) {
-    regs = Temp_TempList(eax(), Temp_TempList(edx(), Temp_TempList(ecx(), NULL)));
+    regs =
+      Temp_TempList(eax(), Temp_TempList(edx(), Temp_TempList(ecx(), NULL)));
   }
   return regs;
 }
 
 Temp_tempList F_CalleeSaves(void);
 
-void F_initRegs()
+void
+F_initRegs()
 {
   Temp_enter(F_tempMap, eax(), "%eax");
   Temp_enter(F_tempMap, ebx(), "%ebx");
@@ -173,7 +192,8 @@ void F_initRegs()
   Temp_enter(F_tempMap, edi(), "%edi");
 }
 
-Temp_tempList F_registers()
+Temp_tempList
+F_registers()
 {
   static Temp_tempList regs = NULL;
   if (!regs) {
@@ -187,7 +207,8 @@ Temp_tempList F_registers()
   return regs;
 }
 
-T_stm F_procEntryExit1(F_frame frame, T_stm stm)
+T_stm
+F_procEntryExit1(F_frame frame, T_stm stm)
 {
   assert(frame->name);
   F_access f_ebx = F_allocLocal(frame, TRUE); // place callee-save registers
@@ -204,48 +225,52 @@ T_stm F_procEntryExit1(F_frame frame, T_stm stm)
   save = T_Seq(T_Move(F_Exp(f_esi, T_Temp(F_FP())), T_Temp(esi())), save);
   save = T_Seq(T_Move(F_Exp(f_edi, T_Temp(F_FP())), T_Temp(edi())), save);
 
-
-  //return T_Seq(T_Label(frame->name), stm); 
+  // return T_Seq(T_Label(frame->name), stm);
   return T_Seq(T_Label(frame->name), save);
 }
 
-Temp_temp F_FP(void)
+Temp_temp
+F_FP(void)
 {
-  //static Temp_temp fp = NULL;
-  //if (fp == NULL)
+  // static Temp_temp fp = NULL;
+  // if (fp == NULL)
   //  fp = Temp_newtemp();
-  //return fp;
+  // return fp;
   return ebp();
 }
 
-Temp_temp F_RV(void)
+Temp_temp
+F_RV(void)
 {
   return eax();
 }
 
-Temp_temp F_SP(void)
+Temp_temp
+F_SP(void)
 {
   static Temp_temp sp = NULL;
-  if (sp == NULL)
-    sp = Temp_newtemp();
+  if (sp == NULL) sp = Temp_newtemp();
   return sp;
 }
 
-T_exp F_Exp(F_access acc, T_exp framePtr)
+T_exp
+F_Exp(F_access acc, T_exp framePtr)
 {
   if (acc->kind == inFrame) {
-    return T_Mem(T_Binop(T_plus,
-                        framePtr, T_Const(acc->u.offset)));
-  } else { // in register
+    return T_Mem(T_Binop(T_plus, framePtr, T_Const(acc->u.offset)));
+  }
+  else { // in register
     return T_Temp(acc->u.reg);
   }
 }
 
-T_exp F_externalCall(string str, T_expList args)
+T_exp
+F_externalCall(string str, T_expList args)
 {
 
-  //T_stm passparam = NULL;
-  //for (; args; args=args->tail) { // reverse the reverse. a stack shuold be arg3..arg2..arg1..eip..ebp
+  // T_stm passparam = NULL;
+  // for (; args; args=args->tail) { // reverse the reverse. a stack shuold be
+  // arg3..arg2..arg1..eip..ebp
   //  if (!passparam) {
   //    passparam = T_Push(args->head);
   //  } else {
@@ -253,41 +278,45 @@ T_exp F_externalCall(string str, T_expList args)
   //  }
   //}
 
-#define osx
-#ifdef osx
+#ifdef __APPLE__
   char *buffer = checked_malloc(64);
   buffer[0] = '_';
   buffer[1] = '\0';
-  strcpy(buffer, str);
+  strcat(buffer, str);
+  return T_Call(T_Name(Temp_namedlabel(buffer)), args);
+#elif __linux__
+  // if linux
   return T_Call(T_Name(Temp_namedlabel(str)), args);
 #else
-  return T_Call(T_Name(Temp_namedlabel(str)), args);
+#error("Only support OS X and Linux!")
 #endif
 }
 
-F_frag F_string(Temp_label lab, string lit)
+F_frag
+F_string(Temp_label lab, string lit)
 {
-    F_frag frg = checked_malloc(sizeof(*frg));
-    frg->kind = F_stringFrag;
-    frg->u.stringg.label = lab;
+  F_frag frg = checked_malloc(sizeof(*frg));
+  frg->kind = F_stringFrag;
+  frg->u.stringg.label = lab;
 
-    string s = checked_malloc(strlen(lit) + 5); // 4 for int, 1 for '\0'
-    *(int *) s = (int) strlen(lit);
-    //printf("len:%d\n", *(int*)s);
-    //*(int *) (s+4) = (int) strlen(lit);
-    strcpy(s+4, lit);
+  string s = checked_malloc(strlen(lit) + 5); // 4 for int, 1 for '\0'
+  *(int*)s = (int)strlen(lit);
+  // printf("len:%d\n", *(int*)s);
+  //*(int *) (s+4) = (int) strlen(lit);
+  strcpy(s + 4, lit);
 
-    //fwrite(s, 1, strlen(lit)+4, stdout);
-    frg->u.stringg.str = s;
-	return frg;
+  // fwrite(s, 1, strlen(lit)+4, stdout);
+  frg->u.stringg.str = s;
+  return frg;
 }
 
-AS_proc F_procEntryExit3(F_frame frame, AS_instrList body)
+AS_proc
+F_procEntryExit3(F_frame frame, AS_instrList body)
 {
   AS_proc proc = checked_malloc(sizeof(*proc));
   assert(body->head->kind == I_LABEL);
   string fname = body->head->u.LABEL.assem;
-  char *r = checked_malloc(64);
+  char* r = checked_malloc(64);
   sprintf(r, "%s pushl\t%%ebp\n movl\t%%esp, %%ebp\n subl $64, %%esp\n", fname);
   proc->prolog = r;
   body = body->tail;
@@ -296,13 +325,21 @@ AS_proc F_procEntryExit3(F_frame frame, AS_instrList body)
   return proc;
 }
 
-int F_frameOffset(F_access acc)
+int
+F_frameOffset(F_access acc)
 {
   assert(acc->kind == inFrame && "ask for offset of a register!");
   return acc->u.offset;
 }
 
-Temp_temp F_DIV(void)
+Temp_temp
+F_DIV(void)
 {
   return edx();
+}
+
+bool
+F_initParamEsc()
+{
+  return TRUE; // all IA32 parameter escapes at first place
 }

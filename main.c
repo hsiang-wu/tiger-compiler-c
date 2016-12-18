@@ -72,7 +72,7 @@ int main(int argc, string *argv)
    fprintf(out, "\n");
 #endif
 	//If you have implemented escape analysis, uncomment this
-   //Esc_findEscape(absyn_root); /* set varDec's escape field */
+   Esc_findEscape(absyn_root); /* set varDec's escape field */
 
    frags = SEM_transProg(absyn_root);
    if (anyErrors) return 1; /* don't continue */
@@ -85,15 +85,32 @@ int main(int argc, string *argv)
      if (frags->head->kind == F_procFrag) {
        static int head = 1;
        if (head) { 
+#ifdef __APPLE__
+          fprintf(out, ".section  __TEXT,__text,regular,pure_instructions\n");
+          fprintf(out, ".globl _tigermain\n");
+          fprintf(out, ".align  4, 0x90\n");
+#elif __linux__
          fprintf(out, ".text\n"); 
           fprintf(out, ".global tigermain\n");
           fprintf(out, ".type tigermain, @function\n");
+#else
+#error("OS not supported");
+#endif
          head = 0; }
 
        doProc(out, frags->head->u.proc.frame, frags->head->u.proc.body);
      } else if (frags->head->kind == F_stringFrag) {
        static int head = 1; 
-       if (head) { fprintf(out, ".section .rodata\n"); head = 0; }
+       if (head) { 
+         head = 0;
+#ifdef __APPLE__
+         fprintf(out, " .section    __TEXT,__data\n");
+#elif __linux__
+         fprintf(out, ".section .rodata\n");
+#else
+#error("OS not supported");
+#endif
+       }
 
        F_frag f = F_string(frags->head->u.stringg.label, frags->head->u.stringg.str);
        fprintf(out, "%s:\n.string \"", S_name(f->u.stringg.label));

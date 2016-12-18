@@ -184,7 +184,7 @@ RA_regAlloc(F_frame f, AS_instrList il)
   struct RA_result ret;
 
   int debug = 0;
-  int upper = 10;
+  int upper = 2;
   for (; debug < upper; debug++) {
     G_graph flowgraph = FG_AssemFlowGraph(il, f);
     struct Live_graph livegraph = Live_liveness(flowgraph);

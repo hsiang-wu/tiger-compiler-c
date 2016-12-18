@@ -169,16 +169,21 @@ A_ForExp(A_pos pos, S_symbol var, A_exp lo, A_exp hi, A_exp body)
   // p->u.forr.body = body;
   // p->u.forr.escape = TRUE;
 
+  // rewrite for grammer in while.
+  // XXX: malfunctioned when limit = maxint
+  // or when the name "__limit" is used in program
+  //
+  // Refer to book 7.2: FOR LOOPS (page 169)
   A_var cntvar = A_SimpleVar(pos, var);
   A_exp cntexp = A_VarExp(pos, cntvar);
   A_exp translated = A_LetExp(
     0,
     A_DecList(
       A_VarDec(pos, var, S_Symbol("int"), lo),
-      A_DecList(A_VarDec(pos, S_Symbol("_limit"), S_Symbol("int"), hi), NULL)),
+      A_DecList(A_VarDec(pos, S_Symbol("__limit"), S_Symbol("int"), hi), NULL)),
     A_WhileExp(
       0, A_OpExp(0, A_leOp, cntexp,
-                 A_VarExp(0, A_SimpleVar(0, S_Symbol("_limit")))),
+                 A_VarExp(0, A_SimpleVar(0, S_Symbol("__limit")))),
       A_SeqExp(
         0, A_ExpList(
              body, A_ExpList(A_AssignExp(0, cntvar, A_OpExp(0, A_plusOp, cntexp,

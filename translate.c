@@ -111,7 +111,12 @@ Tr_outermost(void)
   static Tr_level outermost = NULL;
   if (outermost == NULL) {
     outermost = checked_malloc(sizeof(*outermost));
-    Temp_label label = S_Symbol("tigermain");
+#ifdef __APPLE__
+#define TIGERMAIN "_tigermain"
+#elif __linux__
+#define TIGERMAIN "tigermain"
+#endif
+    Temp_label label = S_Symbol(TIGERMAIN);
     outermost->label = label;
     outermost->frame = F_newFrame(label, NULL);
   }
