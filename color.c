@@ -31,7 +31,7 @@ freeze()
 }
 
 static void
-coaslesce()
+coalesce()
 {
   assert(0 && "not implemented!");
 }
@@ -341,7 +341,7 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
     if (simplify_worklist)
       simplify();
     else if (worklist_moves)
-      coaslesce();
+      coalesce();
     else if (freeze_worklist)
       freeze();
     else if (spill_worklist)
