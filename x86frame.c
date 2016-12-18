@@ -253,7 +253,16 @@ T_exp F_externalCall(string str, T_expList args)
   //  }
   //}
 
+#define osx
+#ifdef osx
+  char *buffer = checked_malloc(64);
+  buffer[0] = '_';
+  buffer[1] = '\0';
+  strcpy(buffer, str);
   return T_Call(T_Name(Temp_namedlabel(str)), args);
+#else
+  return T_Call(T_Name(Temp_namedlabel(str)), args);
+#endif
 }
 
 F_frag F_string(Temp_label lab, string lit)
