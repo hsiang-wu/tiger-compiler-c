@@ -270,27 +270,7 @@ transExp(S_table venv, S_table tenv, A_exp a, Tr_level level, Tr_exp brk)
     case A_forExp: {
       dprintf("for! %s\n", S_name(a->u.forr.var));
 
-      // rewrite for grammer in while.
-      // XXX: malfunctioned when limit = maxint
-      // or when the name "_limit" is used in program
-      A_var cntvar = A_SimpleVar(0, a->u.forr.var);
-      A_exp cntexp = A_VarExp(0, cntvar);
-      A_exp translated = A_LetExp(
-        0, A_DecList(A_VarDec(0, a->u.forr.var, S_Symbol("int"), a->u.forr.lo),
-                     A_DecList(A_VarDec(0, S_Symbol("_limit"), S_Symbol("int"),
-                                        a->u.forr.hi),
-                               NULL)),
-        A_WhileExp(
-          0, A_OpExp(0, A_leOp, cntexp,
-                     A_VarExp(0, A_SimpleVar(0, S_Symbol("_limit")))),
-          A_SeqExp(
-            0, A_ExpList(
-                 a->u.forr.body,
-                 A_ExpList(A_AssignExp(0, cntvar, A_OpExp(0, A_plusOp, cntexp,
-                                                          A_IntExp(0, 1))),
-                           /* make while produce no value */
-                           A_ExpList(A_NilExp(0), NULL))))));
-      return transExp(venv, tenv, translated, level, brk);
+      return transExp(venv, tenv, rewrite_for(a), level, brk);
 
       // a implementation using forexp. but need to implement Tr_forExp()
       // which is not done yet.
@@ -441,10 +421,7 @@ transDec(S_table venv, S_table tenv, A_dec d, Tr_level level, Tr_exp brk)
     case A_varDec: {
       dprintf("dec:vardec:%p %p\n", d->u.var.var, d->u.var.typ);
       struct expty e = transExp(venv, tenv, d->u.var.init, level, brk);
-      // to test spill. make more escapes.
-      // change this back for correctness
-      E_enventry eentry = E_VarEntry(Tr_allocLocal(level, TRUE), e.ty);
-//      E_enventry eentry = E_VarEntry(Tr_allocLocal(level, FALSE), e.ty);
+      E_enventry eentry = E_VarEntry(Tr_allocLocal(level, d->u.var.escape), e.ty);
 
       Ty_ty ty;
       if (d->u.var.typ == NULL) {

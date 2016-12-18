@@ -64,7 +64,7 @@ degreeTable(G_nodeList nl)
 
   for (; nl; nl = nl->tail) {
     //    assert(nl->head == t2n(n2t(nl->head)));
-    TAB_enter(degree_, nl->head, G_degree(nl->head));
+    TAB_enter(degree_, nl->head, (void*) (intptr_t) G_degree(nl->head)); // to appease compiler warnings..
     printf("node:%p.degree:%d\n", nl->head, G_degree(nl->head));
   }
   return degree_;
@@ -199,7 +199,7 @@ heuristic(Temp_temp t, TAB_table degree)
   //// rewrite again.
 
   double v = Temp_num(t) + 100.0 / (intptr_t)TAB_look(degree, n);
-  printf("heuristic: %f degree: %d |", v, (intptr_t)TAB_look(degree, n));
+  printf("heuristic: %f degree: %ld |", v, (intptr_t)TAB_look(degree, n));
   Temp_print(t);
   return v;
 }
