@@ -264,10 +264,6 @@ transExp(S_table venv, S_table tenv, A_exp a, Tr_level level, Tr_exp brk)
     case A_forExp: {
       // see A_ForExp(). It's re-written into while.
       assert(0);
-      //     dprintf("for! %s\n", S_name(a->u.forr.var));
-
-      //      return transExp(venv, tenv, rewrite_for(a), level, brk);
-
       // a implementation using forexp. but need to implement Tr_forExp()
       // which is not done yet.
       // S_beginScope(venv);
@@ -414,6 +410,8 @@ transDec(S_table venv, S_table tenv, A_dec d, Tr_level level, Tr_exp brk)
     case A_varDec: {
       dprintf("dec:vardec:%p %p\n", d->u.var.var, d->u.var.typ);
       struct expty e = transExp(venv, tenv, d->u.var.init, level, brk);
+
+      // Where escape happens.
       E_enventry eentry =
         E_VarEntry(Tr_allocLocal(level, d->u.var.escape), e.ty);
 

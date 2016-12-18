@@ -538,14 +538,6 @@ Tr_doneExp()
 }
 
 Tr_exp
-Tr_forExp(Tr_exp lo, Tr_exp hi, Tr_exp body, Tr_exp done)
-{
-  // TODO: fill this !
-  // it's not used since we translate for to while in semant.c
-  return NULL;
-}
-
-Tr_exp
 Tr_ifExp(Tr_exp cond, Tr_exp then, Tr_exp elsee)
 {
   // special case for const

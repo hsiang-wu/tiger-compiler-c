@@ -68,8 +68,6 @@ Tr_exp Tr_doneExp();
 
 Tr_exp Tr_whileExp(Tr_exp, Tr_exp, Tr_exp);
 
-Tr_exp Tr_forExp(Tr_exp, Tr_exp, Tr_exp, Tr_exp);
-
 Tr_exp Tr_assignExp(Tr_exp, Tr_exp);
 
 Tr_exp Tr_breakExp();
