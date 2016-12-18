@@ -211,9 +211,14 @@ T_stm
 F_procEntryExit1(F_frame frame, T_stm stm)
 {
   assert(frame->name);
-  F_access f_ebx = F_allocLocal(frame, TRUE); // place callee-save registers
-  F_access f_esi = F_allocLocal(frame, TRUE); // place callee-save registers
-  F_access f_edi = F_allocLocal(frame, TRUE); // place callee-save registers
+
+  // TRUE: always move to stack
+  // FALSE: only to stack when there's high register pressure  (during spilling)
+  bool tostack = FALSE;
+
+  F_access f_ebx = F_allocLocal(frame, tostack); // place callee-save registers
+  F_access f_esi = F_allocLocal(frame, tostack); // place callee-save registers
+  F_access f_edi = F_allocLocal(frame, tostack); // place callee-save registers
 
   T_stm rstr; // restore
   rstr = T_Move(T_Temp(ebx()), F_Exp(f_ebx, T_Temp(F_FP())));
