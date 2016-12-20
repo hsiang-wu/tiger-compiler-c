@@ -104,6 +104,12 @@ AccHead(Tr_accessList accs)
   return accs->head;
 }
 
+#ifdef __APPLE__
+#define TIGERMAIN "_tigermain"
+#elif __linux__
+#define TIGERMAIN "tigermain"
+#endif
+
 // so the name _outermost is preserved
 Tr_level
 Tr_outermost(void)
@@ -111,11 +117,6 @@ Tr_outermost(void)
   static Tr_level outermost = NULL;
   if (outermost == NULL) {
     outermost = checked_malloc(sizeof(*outermost));
-#ifdef __APPLE__
-#define TIGERMAIN "_tigermain"
-#elif __linux__
-#define TIGERMAIN "tigermain"
-#endif
     Temp_label label = S_Symbol(TIGERMAIN);
     outermost->label = label;
     outermost->frame = F_newFrame(label, NULL);
@@ -497,18 +498,6 @@ Tr_seqExp(Tr_expList l)
 Tr_exp
 Tr_nilExp()
 {
-  // static Temp_temp nilTemp = NULL;
-  // if (!nilTemp) {
-  //  nilTemp = Temp_newtemp(); // so we can compare nil
-  //  /* XXX */
-  //  T_stm alloc =
-  //    T_Move(T_Temp(nilTemp),
-  //           F_externalCall("allocRecord", T_ExpList(T_Const(0), NULL)));
-  //  return Tr_Ex(T_Eseq(alloc, T_Temp(nilTemp)));
-  //}
-  // else {
-  //  return Tr_Ex(T_Temp(nilTemp));
-  //}
   return Tr_Ex(T_Const(0));
 }
 
@@ -516,16 +505,30 @@ Tr_exp
 Tr_whileExp(Tr_exp test, Tr_exp body, Tr_exp done)
 {
   Temp_label testl = Temp_newlabel(), bodyl = Temp_newlabel();
+  T_stm cjmp;
+  struct Cx tmp;
+  if (test->kind == Tr_cx) {
+    // TODO: some bug if write this 
+    // optimization...try to figure out?
+    tmp = unCx(test);
+    doPatch(tmp.trues, bodyl);
+    doPatch(tmp.falses, unEx(done)->u.NAME);
+    cjmp = tmp.stm;
+  }
+  else {
+    cjmp = T_Cjump(T_eq, unEx(test), T_Const(0), unEx(done)->u.NAME, bodyl);
+  }
+  
+  // fix the above bug and delete next line.
+  cjmp = T_Cjump(T_eq, unEx(test), T_Const(0), unEx(done)->u.NAME, bodyl);
 
-  T_exp whilee = T_Eseq(
-    T_Jump(T_Name(testl), Temp_LabelList(testl, NULL)),
-    T_Eseq(
-      T_Label(bodyl),
-      T_Eseq(unNx(body),
-             T_Eseq(T_Label(testl),
-                    T_Eseq(T_Cjump(T_eq, unEx(test), T_Const(0),
-                                   unEx(done)->u.NAME, bodyl),
-                           T_Eseq(T_Label(unEx(done)->u.NAME), T_Const(0)))))));
+  T_exp whilee =
+    T_Eseq(T_Jump(T_Name(testl), Temp_LabelList(testl, NULL)),
+           T_Eseq(T_Label(bodyl),
+                  T_Eseq(unNx(body),
+                         T_Eseq(T_Label(testl),
+                                T_Eseq(cjmp, T_Eseq(T_Label(unEx(done)->u.NAME),
+                                                    T_Const(0)))))));
   // printf("whileexp\n");
   // printStmList(stdout, T_StmList(T_Exp(whilee), NULL));
   return Tr_Ex(whilee);
@@ -582,9 +585,9 @@ Tr_procEntryExit(Tr_level level, Tr_exp body)
   // move the value of body to RV(return value register)
   T_stm procstm =
     F_procEntryExit1(level->frame, T_Move(T_Temp(F_RV()), unEx(body)));
- // printf("print stm\n");
- // printStmList(stdout, T_StmList(procstm, NULL));
- // printf("-print stm\n");
+  // printf("print stm\n");
+  // printStmList(stdout, T_StmList(procstm, NULL));
+  // printf("-print stm\n");
   fragList = F_FragList(F_ProcFrag(procstm, level->frame), fragList);
 }
 
