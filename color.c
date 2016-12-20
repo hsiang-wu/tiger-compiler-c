@@ -55,10 +55,11 @@ static G_nodeList adjacent(G_node n);
 static void
 addedge(G_node u, G_node v)
 {
-  if (is_adjacent(u, v) && u != v) {
+  if (!is_adjacent(u, v) && u != v) {
     // TBD
     // XXX: this changes graph.. is it OK?
-    G_addEdge(u, v);
+    printf("Add edge t%d to t%d\n", Temp_num(n2t(u)), Temp_num(n2t(v)));
+    G_addEdge(v, u);
     TAB_enter(degree_, u, (void*)(intptr_t)TAB_look(degree_, u) + 1);
     TAB_enter(degree_, v, (void*)(intptr_t)TAB_look(degree_, v) + 1);
   }
@@ -189,6 +190,7 @@ combine(G_node u, G_node v)
   MOV_append(move_table, u, MOV_look(move_table, v));
   G_nodeList nl = adjacent(v);
   for (; nl; nl = nl->tail) {
+    printf("combine t%d's adjacents: t%d, add it to t%d's\n", Temp_num(n2t(v)), Temp_num(n2t(nl->head)), Temp_num(n2t(u)));
     addedge(nl->head, u);
     decre_degree(nl->head);
   }
@@ -430,7 +432,6 @@ except_precolor(G_nodeList nl, Temp_tempList precolored)
       }
     }
     else {
-      G_add(&precolored_nodes, nl->head);
       printf("delete:");
       Temp_print(reg);
     }
@@ -601,6 +602,7 @@ make_worklist(G_nodeList nl)
   }
 }
 
+
 struct COL_result
 COL_color(G_graph ig, Temp_map initial, Temp_tempList regs, Live_moveList moves)
 {
@@ -642,6 +644,12 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs, Live_moveList moves)
 
   select_stack = NULL;
   coalesced_nodes = NULL;
+
+  precolored_nodes = NULL;
+  for (; regs; regs = regs->tail) {
+    G_add(&precolored_nodes, t2n(regs->head));
+  }
+
   printf("coalesced_nodes:%p\n", coalesced_nodes);
   while (simplify_worklist || worklist_moves || freeze_worklist ||
          spill_worklist) {
