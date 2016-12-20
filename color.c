@@ -139,8 +139,7 @@ is_all_adjs_ok(G_node u, G_node v)
     // OK
     if (get_degree(t) < K || is_precolored(t) || is_adjacent(t, v)) {
       continue;
-    }
-    else {
+    } else {
       return FALSE;
     }
   }
@@ -172,8 +171,7 @@ combine(G_node u, G_node v)
   printf("combine %d and %d\n", Temp_num(n2t(u)), Temp_num(n2t(v)));
   if (inList(freeze_worklist, n2t(v))) {
     deletee(&freeze_worklist, n2t(v));
-  }
-  else {
+  } else {
     deletee(&spill_worklist, n2t(v));
   }
   assert(!is_precolored(v));
@@ -216,8 +214,7 @@ coalesce()
   if (is_precolored(y)) {
     u = y;
     v = x;
-  }
-  else {
+  } else {
     u = x;
     v = y;
   }
@@ -228,21 +225,18 @@ coalesce()
     MOV_add(&coalesced_moves, src, dst);
     add_worklist(u);
     printf("Same. add to coalesced_moves and worklist\n");
-  }
-  else if (is_precolored(v) || is_adjacent(u, v)) {
+  } else if (is_precolored(v) || is_adjacent(u, v)) {
     MOV_add(&constrained_moves, src, dst);
     add_worklist(u);
     add_worklist(v);
     printf("Coalesced. add to coalesced_moves and worklist\n");
-  }
-  else if ((is_precolored(u) && is_all_adjs_ok(v, u)) ||
-           (!is_precolored(u) &&
-            conservative(G_union(adjacent(u), adjacent(v))))) {
+  } else if ((is_precolored(u) && is_all_adjs_ok(v, u)) ||
+             (!is_precolored(u) &&
+              conservative(G_union(adjacent(u), adjacent(v))))) {
     MOV_add(&coalesced_moves, src, dst);
     combine(u, v);
     add_worklist(u);
-  }
-  else {
+  } else {
     MOV_add(&active_moves, src, dst);
     printf("Add to active_moves\n");
   }
@@ -347,6 +341,10 @@ decre_degree(G_node n)
   TAB_enter(degree_, n, (void*)newd);
   //  assert(newd >= 0); // XXX:this is an error..
   if (newd == K - 1) {
+    if (is_precolored(n)) {
+      printf("delete a precolored node...\n");
+      return;
+    }
     deletee(&spill_worklist, n2t(n));
 
     G_nodeList ns = adjacent(n);
@@ -376,8 +374,7 @@ delete_node(G_nodeList* nl, G_nodeList last, TAB_table degree)
   if (last) { // remove this node
     tmp = last->tail->head;
     last->tail = last->tail->tail;
-  }
-  else {
+  } else {
     tmp = (*nl)->head;
     *nl = (*nl)->tail;
   }
@@ -435,25 +432,25 @@ nl2tl(G_nodeList nl)
 static G_nodeList
 except_precolor(G_nodeList nl, Temp_tempList precolored)
 {
-  printf("Delete precolored node:");
+  printf("Delete precolored node:\n");
   G_nodeList newnl = NULL, head;
   for (; nl; nl = nl->tail) {
     Temp_temp reg = G_nodeInfo(nl->head);
     if (!inList(precolored, reg)) {
       if (newnl) {
         newnl = newnl->tail = G_NodeList(nl->head, NULL);
-      }
-      else {
+      } else {
         head = newnl = G_NodeList(nl->head, NULL);
       }
-    }
-    else {
+    } else {
       printf("delete:");
       Temp_print(reg);
     }
   }
+  for (nl = head; nl; nl = nl->tail) {
+    printf("t%d\n", Temp_num(n2t(nl->head)));
+  }
   return head;
-  return nl;
 }
 
 extern TAB_table tempMap;
@@ -613,12 +610,10 @@ make_worklist(G_nodeList nl)
     if (G_degree(nl->head) >= K) {
       add(&spill_worklist, n2t(nl->head));
       printf("add to spill_worklist\n");
-    }
-    else if (is_moverelated(nl->head)) {
+    } else if (is_moverelated(nl->head)) {
       add(&freeze_worklist, n2t(nl->head));
       printf("add to freeze_worklist\n");
-    }
-    else {
+    } else {
       add(&simplify_worklist, n2t(nl->head));
       printf("add %d to simplify_worklist\n", Temp_num(n2t(nl->head)));
     }

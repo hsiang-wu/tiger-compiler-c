@@ -48,7 +48,7 @@ doProc(FILE* out, F_frame frame, T_stm body)
   struct RA_result ra = RA_regAlloc(frame, iList); /* 10, 11 */
 
   fprintf(out, "#BEGIN function\n");
-  proc = F_procEntryExit3(frame, iList);
+  proc = F_procEntryExit3(frame, ra.il);
   fprintf(out, "%s", proc->prolog);
   AS_printInstrList(
     out, proc->body,
@@ -104,8 +104,7 @@ main(int argc, string* argv)
         }
 
         doProc(out, frags->head->u.proc.frame, frags->head->u.proc.body);
-      }
-      else if (frags->head->kind == F_stringFrag) {
+      } else if (frags->head->kind == F_stringFrag) {
         static int head = 1;
         if (head) {
           head = 0;

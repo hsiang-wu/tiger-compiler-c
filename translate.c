@@ -11,18 +11,21 @@ extern char* externalCallNames[]; // in env.c
 
 static T_expList Tr_expList_convert(Tr_expList l);
 static Tr_exp Tr_StaticLink(Tr_level now, Tr_level def);
-struct Tr_access_ {
+struct Tr_access_
+{
   // Lab5: your code here
   Tr_level level;
   F_access access;
 };
 
-struct Tr_accessList_ {
+struct Tr_accessList_
+{
   Tr_access head;
   Tr_accessList tail;
 };
 
-struct Tr_level_ {
+struct Tr_level_
+{
   // Lab5: your code here
   F_frame frame;
   Tr_level parent;
@@ -30,23 +33,32 @@ struct Tr_level_ {
   Tr_accessList formals;
 };
 
-struct Cx {
+struct Cx
+{
   patchList trues;
   patchList falses;
   T_stm stm;
 };
 
-struct Tr_exp_ {
+struct Tr_exp_
+{
   // Lab5: your code here
-  enum { Tr_ex, Tr_nx, Tr_cx } kind;
-  union {
+  enum
+  {
+    Tr_ex,
+    Tr_nx,
+    Tr_cx
+  } kind;
+  union
+  {
     T_exp ex;
     T_stm nx;
     struct Cx cx;
   } u;
 };
 
-struct Tr_expList_ {
+struct Tr_expList_
+{
   Tr_exp head;
   Tr_expList tail;
 };
@@ -80,7 +92,8 @@ Tr_Cx(patchList trues, patchList falses, T_stm stm)
   return e;
 }
 
-struct patchList_ {
+struct patchList_
+{
   Temp_label* head;
   patchList tail;
 };
@@ -109,6 +122,10 @@ AccHead(Tr_accessList accs)
 #elif __linux__
 #define TIGERMAIN "tigermain"
 #endif
+
+#define STRINGEQUAL "stringEqual"
+#define ALLOCRECORD "allocRecord"
+#define INITARRAY "initArray"
 
 // so the name _outermost is preserved
 Tr_level
@@ -320,12 +337,22 @@ Tr_callExp(Temp_label label, Tr_level fun, Tr_level call,
            Tr_expList el_reversed)
 {
   int i = 0;
+  string dest;
+  //#ifdef __APPLE__
+  //  dest = checked_malloc(64);
+  //  dest[0] = '+';
+  //  dest[1] = '\0';
+  //  strcat(dest, externalCallNames[i]);
+  //#elif __linux__
+  //#endif
+
   for (; strcmp(externalCallNames[i], ""); i++) {
     if (strcmp(S_name(label), externalCallNames[i]) == 0) {
       T_expList args = NULL;
       args = Tr_expList_convert(el_reversed);
 
-      return Tr_Ex(F_externalCall(externalCallNames[i], args));
+      dest = externalCallNames[i];
+      return Tr_Ex(F_externalCall(dest, args));
     }
   }
 
@@ -413,15 +440,14 @@ Tr_recordExp(Tr_expList el_reversed)
       seq = T_Seq(
         seq, T_Move(T_Mem(T_Binop(T_plus, T_Temp(r), T_Const(i * F_wordSize))),
                     unEx(l->head)));
-    }
-    else {
+    } else {
       seq = T_Move(T_Mem(T_Binop(T_plus, T_Temp(r), T_Const(i * F_wordSize))),
                    unEx(l->head));
     }
   }
   /*alloc len * WORD-SIZE mem*/
   T_stm alloc =
-    T_Move(T_Temp(r), F_externalCall("allocRecord",
+    T_Move(T_Temp(r), F_externalCall(ALLOCRECORD,
                                      T_ExpList(T_Const(i * F_wordSize), NULL)));
 
   return Tr_Ex(T_Eseq(T_Seq(alloc, seq), T_Temp(r)));
@@ -433,7 +459,7 @@ Tr_arrayExp(Tr_exp init, Tr_exp size)
   // because externalcall expects args in a reversed order.
   // we must give the list in (init, size)
   return Tr_Ex(F_externalCall(
-    String("initArray"), T_ExpList(unEx(init), T_ExpList(unEx(size), NULL))));
+    String(INITARRAY), T_ExpList(unEx(init), T_ExpList(unEx(size), NULL))));
 }
 
 Tr_exp
@@ -475,8 +501,7 @@ Tr_expList_convert(Tr_expList l)
     if (head != NULL) {
       t->tail = T_ExpList(tmp, NULL);
       t = t->tail;
-    }
-    else {
+    } else {
       head = T_ExpList(tmp, NULL);
       t = head;
     }
@@ -508,17 +533,16 @@ Tr_whileExp(Tr_exp test, Tr_exp body, Tr_exp done)
   T_stm cjmp;
   struct Cx tmp;
   if (test->kind == Tr_cx) {
-    // TODO: some bug if write this 
+    // TODO: some bug if write this
     // optimization...try to figure out?
     tmp = unCx(test);
     doPatch(tmp.trues, bodyl);
     doPatch(tmp.falses, unEx(done)->u.NAME);
     cjmp = tmp.stm;
-  }
-  else {
+  } else {
     cjmp = T_Cjump(T_eq, unEx(test), T_Const(0), unEx(done)->u.NAME, bodyl);
   }
-  
+
   // fix the above bug and delete next line.
   cjmp = T_Cjump(T_eq, unEx(test), T_Const(0), unEx(done)->u.NAME, bodyl);
 
@@ -547,8 +571,7 @@ Tr_ifExp(Tr_exp cond, Tr_exp then, Tr_exp elsee)
   if (cond->u.ex->kind == T_CONST) {
     if (cond->u.ex->u.CONST) {
       return Tr_Ex(unEx(then));
-    }
-    else {
+    } else {
       return Tr_Ex(unEx(elsee));
     }
   }
@@ -637,7 +660,7 @@ Tr_compString(A_oper op, Tr_exp lt, Tr_exp rt)
 
   Temp_temp r = Temp_newtemp();
   T_stm eq = T_Move(
-    T_Temp(r), F_externalCall("stringEqual",
+    T_Temp(r), F_externalCall(STRINGEQUAL,
                               T_ExpList(unEx(rt), T_ExpList(unEx(lt), NULL))));
   T_stm cond =
     T_Cjump(oper, T_Temp(r), T_Const(1), Temp_newlabel(), Temp_newlabel());

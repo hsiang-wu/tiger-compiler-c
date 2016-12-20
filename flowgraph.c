@@ -67,9 +67,11 @@ FG_addJumps(TAB_table t, G_node n)
   for (; tl; tl = tl->tail) {
     neighbour = (G_node)TAB_look(t, tl->head);
     if (neighbour) {
-      if (!G_goesTo(n, neighbour)) G_addEdge(n, neighbour);
-    }
-    else {
+      if (!G_goesTo(n, neighbour)) {
+        G_addEdge(n, neighbour);
+        printf("Add flow graph edge: jump to %s\n", S_name(tl->head));
+      }
+    } else {
       printf("can't find label %s\n", S_name(tl->head));
       assert(0);
     }
@@ -227,8 +229,9 @@ FG_AssemFlowGraph(AS_instrList il, F_frame f)
 
   for (; nodes; nodes = nodes->tail) {
     curr = nodes->head;
-    if (((AS_instr)G_nodeInfo(curr))->kind == I_OPER)
-      FG_addJumps(label_tb, curr);
+    //    if (((AS_instr)G_nodeInfo(curr))->kind == I_OPER) {
+    FG_addJumps(label_tb, curr);
+    //    }
   }
   printf("\nflowgraph:\n");
   G_show(stdout, G_nodes(g), printInsNode);

@@ -12,6 +12,7 @@
 #include "util.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "codegen.h"
 #include "flowgraph.h"
@@ -43,7 +44,11 @@ rewrite_inst(Temp_tempList tl, Temp_temp oldt, Temp_temp newt)
   assert(D_found);
 }
 
-enum { AS_USE, AS_DEF };
+enum
+{
+  AS_USE,
+  AS_DEF
+};
 static void
 rewrite(Temp_temp spill, AS_instrList il, F_frame f)
 {
@@ -123,6 +128,33 @@ rewrite_programm(Temp_tempList tl, AS_instrList il, F_frame f)
   }
 }
 
+//
+// MUUUHAHAHAHAHA
+// Last step: delete duplicate moves.
+// I love writing this function~~~
+//
+// Use recursive to end this lab because I'm tired
+// of for(;xx;xx=xx->tail) pattern.
+static AS_instrList
+del_dup_move(AS_instrList il, Temp_map coloring)
+{
+  if (!il) return NULL;
+
+  // MOVE always has single dst and src.
+  if (il->head->kind == I_MOVE) {
+    string d = Temp_look(coloring, il->head->u.MOVE.dst->head);
+    string s = Temp_look(coloring, il->head->u.MOVE.src->head);
+    if (strcmp(d, s) == 0) {
+      printf("delete dup move %s %s\n", d, s);
+      return del_dup_move(il->tail, coloring);
+    }
+    fprintf(stdout, "MOVE a format: assem=%s, dst=%p, src=%p\n",
+            il->head->u.MOVE.assem, d, s);
+  }
+
+  return AS_InstrList(il->head, del_dup_move(il->tail, coloring));
+}
+
 struct RA_result
 RA_regAlloc(F_frame f, AS_instrList il)
 {
@@ -148,6 +180,7 @@ RA_regAlloc(F_frame f, AS_instrList il)
   }
   assert(debug != upper && "spill error");
 
+  il = del_dup_move(il, ret.coloring);
   ret.il = il;
   return ret;
 }

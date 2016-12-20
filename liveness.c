@@ -83,11 +83,11 @@ createInOutTable(G_graph flow, G_table in, G_table out)
       }
       G_enter(out, nl->head, outtl); // update out-table
 
-      //        printInsNode(G_nodeInfo(nl->head)); // FG
-
+      // printInsNode(G_nodeInfo(nl->head)); // FG
       // printf("out:\n");
       // Temp_printList(outtl);
       // printf("\n");
+
       /*
        * repeat until in = in1, out = out1
        */
@@ -171,8 +171,7 @@ inteferenceGraph(G_nodeList nl, G_table liveMap)
 
         G_addEdge(dst, t);
       }
-    }
-    else { // i->kind == I_OPER
+    } else { // i->kind == I_OPER
 
       printInsNode(G_nodeInfo(nl->head)); // FG
 

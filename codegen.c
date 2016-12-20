@@ -47,8 +47,13 @@ emit(AS_instr inst)
   else
     last = iList = AS_InstrList(inst, NULL);
 
-  /* after def, immediate use
+  /* 
+   * after def, immediate use
    * Moved to flowgraph
+   *
+   * No longer used here because this makes rewrite error-prone.
+   * Change algorithm in liveness. (every time out U= def)
+   * 
    * */
   // switch (inst->kind) {
   //  case I_OPER:
@@ -161,7 +166,8 @@ munchExp(T_exp e)
           }
           else {
             sprintf(buffer, "\tmovl\t`s0, `d0\n");
-            emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), NULL), NULL));
+//            emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), NULL), NULL));
+            emit(AS_Move(buffer, L(r, NULL), L(munchExp(lt), NULL)));
 
             buffer = checked_malloc(BLEN);
             sprintf(buffer, "\taddl\t`s0, `d0\n");
@@ -178,7 +184,8 @@ munchExp(T_exp e)
           // Temp_temp l = munchExp(lt);
           // Temp_temp r = munchExp(rt);
           sprintf(buffer, "\tmovl\t`s0, `d0\n");
-          emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), NULL), NULL));
+//          emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), NULL), NULL));
+          emit(AS_Move(buffer, L(r, NULL), L(munchExp(lt), NULL)));
 
           buffer = checked_malloc(BLEN);
           sprintf(buffer, "\tsubl\t`s0, `d0\n");
@@ -188,7 +195,8 @@ munchExp(T_exp e)
         case T_mul: {
           // r = s1 * s2
           sprintf(buffer, "\tmovl\t`s0, `d0\n");
-          emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), NULL), NULL));
+//          emit(AS_Oper(buffer, L(r, NULL), L(munchExp(lt), NULL), NULL));
+          emit(AS_Move(buffer, L(r, NULL), L(munchExp(lt), NULL)));
 
           buffer = checked_malloc(BLEN);
           sprintf(buffer, "\timull\t`s0, `d0\n");
@@ -205,7 +213,8 @@ munchExp(T_exp e)
           // for convenience, use F_RV() to refer to %eax.
           // since idiv is also a machine-specific instruction
           // it does not seem to broken modularity.
-          emit(AS_Oper(buffer, L(F_RV(), NULL), L(ltmp, NULL), NULL));
+//          emit(AS_Oper(buffer, L(F_RV(), NULL), L(ltmp, NULL), NULL));
+          emit(AS_Move(buffer, L(F_RV(), NULL), L(ltmp, NULL)));
 
           buffer = checked_malloc(BLEN);
           sprintf(buffer, "\tcltd\n");
