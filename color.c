@@ -626,6 +626,7 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs, Live_moveList moves)
   // now nl doesn't have any pre-colored node.
   //
   // Precolored nodelist is created in this call.
+  precolored_nodes = NULL;
   nl = except_precolor(nl, regs);
 
   // build table from moves.
@@ -640,7 +641,6 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs, Live_moveList moves)
   make_worklist(nl);
 
   select_stack = NULL;
-  precolored_nodes = NULL;
   coalesced_nodes = NULL;
   printf("coalesced_nodes:%p\n", coalesced_nodes);
   while (simplify_worklist || worklist_moves || freeze_worklist ||
