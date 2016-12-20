@@ -1,5 +1,6 @@
 #include "move.h"
 
+#include "temp.h"
 static Live_moveList copylist(Live_moveList m);
 static void MOV_enter(MOV_table mt, G_node n, Live_moveList ml);
 
@@ -17,7 +18,7 @@ MOV_inlist(Live_moveList ml, G_node src, G_node dst)
 void
 MOV_delete(Live_moveList* pm, G_node src, G_node dst)
 {
-  assert(!MOV_inlist(*pm, src, dst));
+  assert(MOV_inlist(*pm, src, dst));
   Live_moveList ml, last;
   ml = *pm;
   last = NULL;
@@ -30,6 +31,7 @@ MOV_delete(Live_moveList* pm, G_node src, G_node dst)
     }
     last = ml;
   }
+  assert(!MOV_inlist(*pm, src, dst));
 }
 
 void
@@ -42,12 +44,15 @@ MOV_add(Live_moveList* pm, G_node src, G_node dst)
 Live_moveList
 MOV_intersection(Live_moveList m1, Live_moveList m2)
 {
+  printf("move intersection\n");
   if (!m1) return NULL;
 
   Live_moveList r = NULL;
   for (; m2; m2 = m2->tail) {
-    if (!m1 || MOV_inlist(m1, m2->src, m2->dst))
+    if (MOV_inlist(m1, m2->src, m2->dst)) {
       r = Live_MoveList(m2->src, m2->dst, r);
+      printf("add to r\n");
+    }
   }
   return r;
 }
@@ -59,7 +64,8 @@ copylist(Live_moveList m)
   for (; m; m = m->tail) {
     if (!tl) {
       hd = tl = Live_MoveList(m->src, m->dst, NULL);
-    } else {
+    }
+    else {
       tl = tl->tail = Live_MoveList(m->src, m->dst, NULL);
     }
   }
@@ -69,7 +75,7 @@ copylist(Live_moveList m)
 Live_moveList
 MOV_union(Live_moveList m1, Live_moveList m2)
 {
-  if (!m1) return m2;
+  if (!m1) return copylist(m2);
 
   Live_moveList r = copylist(m1);
   for (; m2; m2 = m2->tail) {
@@ -77,6 +83,14 @@ MOV_union(Live_moveList m1, Live_moveList m2)
       r = Live_MoveList(m2->src, m2->dst, r);
   }
   return r;
+}
+
+void
+show(void* key, void* value)
+{
+  printf("G_node:");
+  G_node n = (G_node)key;
+  printf("%d", Temp_num(G_nodeInfo(n)));
 }
 
 // name for moveList in book.
@@ -90,8 +104,12 @@ MOV_table MOV_Table(Live_moveList ml) // traverse movelist and build table.
     src = ml->src;
     dst = ml->dst;
     MOV_append(mt, src, Live_MoveList(src, dst, NULL));
-    MOV_append(mt, dst, Live_MoveList(src, dst, NULL));
+    if (src != dst) {
+      MOV_append(mt, dst, Live_MoveList(src, dst, NULL));
+    }
   }
+  printf("move table:%p\n", mt);
+  TAB_dump(mt, show);
   return mt;
 }
 

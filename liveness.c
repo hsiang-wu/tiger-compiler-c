@@ -9,6 +9,8 @@
 #include "temp.h"
 #include "tree.h"
 #include "util.h"
+
+#include "move.h"
 #include <stdio.h>
 
 Live_moveList
@@ -137,66 +139,69 @@ inteferenceGraph(G_nodeList nl, G_table liveMap)
 
   printf("inteferenceGraph:\n");
   G_show(stdout, G_nodes(g), Temp_print); // debug
-
+  Temp_tempList liveouts;
   for (; nl; nl = nl->tail) {
     AS_instr i = (AS_instr)G_nodeInfo(nl->head);
     assert(i);
     Temp_tempList defs = FG_def(nl->head);
 
-    // if (i->kind == I_MOVE) {
-    //  Temp_tempList srcs = FG_use(nl->head);
-    //  assert(defs->tail == NULL); // our move instruction only have 1 def.
-    //  assert(srcs->tail == NULL); // and from 1 reg.
-
-    //  G_node dst = (G_node)TAB_look(tempMap, defs->head);
-    //  G_node src = (G_node)TAB_look(tempMap, srcs->head);
-
-    //  Live_MoveList(dst, src, moves); // add to movelist
-
-    //  for (; liveouts; liveouts = liveouts->tail) {
-    //    // look which node by map temp -> node
-    //    G_node t = (G_node)TAB_look(tempMap, liveouts->head);
-
-    //    if (dst == t) continue;
-
-    //    // TODO:
-    //    // We don't have to add next edge if we did coalescing.
-    //    // currently we skip it so I comment it out.
-    //    // when doing coalescing, uncomment next line.
-    //    // if (liveouts->head == srcs->head) continue;
-
-    //    G_addEdge(dst, t);
-    //  }
-    //} else {
-
-    // printInsNode(G_nodeInfo(nl->head)); // FG
-
-    ////printf("in:\n");
-    ////Temp_printList(intl);
-    // printf("out:\n");
-    // Temp_printList(liveouts);
-    // printf("\n");
-
-    for (; defs; defs = defs->tail) {
-      //   assert(i->kind == I_OPER || i->kind == I_LABEL);
-      //   XXX:must place it here!!!
-      //   otherwise second defs will get empty
-      //   liveouts.
-      Temp_tempList liveouts = G_look(liveMap, nl->head);
+    if (i->kind == I_MOVE) {
+      Temp_tempList srcs = FG_use(nl->head);
+      assert(defs->tail == NULL); // our move instruction only have 1 def.
+      assert(srcs->tail == NULL); // and from 1 reg.
 
       G_node dst = (G_node)TAB_look(tempMap, defs->head);
+      G_node src = (G_node)TAB_look(tempMap, srcs->head);
+
+      MOV_add(&moves, src, dst); // add to movelist
+
+      liveouts = G_look(liveMap, nl->head);
+
       for (; liveouts; liveouts = liveouts->tail) {
+        // look which node by map temp -> node
         G_node t = (G_node)TAB_look(tempMap, liveouts->head);
 
         if (dst == t) continue;
+
+        // TODO:
+        // We don't have to add next edge if we did coalescing.
+        // currently we skip it so I comment it out.
+        // when doing coalescing, uncomment next line.
+        if (liveouts->head == srcs->head) continue;
+
         G_addEdge(dst, t);
-        //        printf("add edge:\n");
-        //        Temp_print(liveouts->head);
-        //        Temp_print(defs->head);
-        //        printf("---\n");
       }
     }
-    //}
+    else { // i->kind == I_OPER
+
+      printInsNode(G_nodeInfo(nl->head)); // FG
+
+      ////printf("in:\n");
+      ////Temp_printList(intl);
+      // printf("out:\n");
+      // Temp_printList(liveouts);
+      // printf("\n");
+
+      for (; defs; defs = defs->tail) {
+        //   assert(i->kind == I_OPER || i->kind == I_LABEL);
+        //   XXX:must place it here!!!
+        //   otherwise second defs will get empty
+        //   liveouts.
+        liveouts = G_look(liveMap, nl->head);
+
+        G_node dst = (G_node)TAB_look(tempMap, defs->head);
+        for (; liveouts; liveouts = liveouts->tail) {
+          G_node t = (G_node)TAB_look(tempMap, liveouts->head);
+
+          if (dst == t) continue;
+          G_addEdge(dst, t);
+          //        printf("add edge:\n");
+          //        Temp_print(liveouts->head);
+          //        Temp_print(defs->head);
+          //        printf("---\n");
+        }
+      }
+    }
   }
 
   printf("\ninteferenceGraph:\n");
@@ -216,6 +221,7 @@ Live_liveness(G_graph flow)
   G_table out = G_empty();
   createInOutTable(flow, in, out); /* solution of data-flow */
 
+  moves = NULL;
   G_graph g = inteferenceGraph(G_nodes(flow), out); // from out
   lg.graph = g;
   lg.moves = moves;
