@@ -21,7 +21,7 @@ MOV_table move_table; // alias of movelist in book code.
 Live_moveList coalesced_moves, constrained_moves, frozen_moves, active_moves,
   worklist_moves;
 
-static TAB_table degree_;
+static TAB_table degree_, heuristic_degree_;
 static G_graph ig_;
 
 // convert a temp to a node.
@@ -160,7 +160,7 @@ conservative(G_nodeList nl)
 static void
 add_worklist(G_node u)
 {
-  if (is_precolored(u) && !is_moverelated(u) && get_degree(u) < K) {
+  if (!is_precolored(u) && !is_moverelated(u) && get_degree(u) < K) {
     deletee(&freeze_worklist, n2t(u));
     add(&simplify_worklist, n2t(u));
   }
@@ -190,7 +190,8 @@ combine(G_node u, G_node v)
   MOV_append(move_table, u, MOV_look(move_table, v));
   G_nodeList nl = adjacent(v);
   for (; nl; nl = nl->tail) {
-    printf("combine t%d's adjacents: t%d, add it to t%d's\n", Temp_num(n2t(v)), Temp_num(n2t(nl->head)), Temp_num(n2t(u)));
+    printf("combine t%d's adjacents: t%d, add it to t%d's\n", Temp_num(n2t(v)),
+           Temp_num(n2t(nl->head)), Temp_num(n2t(u)));
     addedge(nl->head, u);
     decre_degree(nl->head);
   }
@@ -206,47 +207,47 @@ coalesce()
   printf("doing coalesce\n");
   G_node x, y, u, v, src, dst;
   Live_moveList ml = worklist_moves;
-  for (; ml; ml = ml->tail) {
-    src = ml->src;
-    dst = ml->dst;
-    x = get_alias(src);
-    y = get_alias(dst);
+  //  for (; ml; ml = ml->tail) {
+  src = ml->src;
+  dst = ml->dst;
+  x = get_alias(src);
+  y = get_alias(dst);
 
-    if (is_precolored(y)) {
-      u = y;
-      v = x;
-    }
-    else {
-      u = x;
-      v = y;
-    }
-
-    printf("coalesce t%d and t%d\n", Temp_num(n2t(u)), Temp_num(n2t(v)));
-    MOV_delete(&worklist_moves, src, dst); // remove m
-    if (u == v) {
-      MOV_add(&coalesced_moves, src, dst);
-      add_worklist(u);
-      printf("Same. add to coalesced_moves and worklist\n");
-    }
-    else if (is_precolored(v) || is_adjacent(u, v)) {
-      MOV_add(&constrained_moves, src, dst);
-      add_worklist(u);
-      add_worklist(v);
-      printf("Coalesced. add to coalesced_moves and worklist\n");
-    }
-    else if ((is_precolored(u) && is_all_adjs_ok(v, u)) ||
-             (!is_precolored(u) &&
-              conservative(G_union(adjacent(u), adjacent(v))))) {
-      MOV_add(&coalesced_moves, src, dst);
-      combine(u, v);
-      add_worklist(u);
-    }
-    else {
-      MOV_add(&active_moves, src, dst);
-      printf("Add to active_moves\n");
-    }
+  if (is_precolored(y)) {
+    u = y;
+    v = x;
   }
-  assert(!worklist_moves);
+  else {
+    u = x;
+    v = y;
+  }
+
+  printf("coalesce t%d and t%d\n", Temp_num(n2t(u)), Temp_num(n2t(v)));
+  MOV_delete(&worklist_moves, src, dst); // remove m
+  if (u == v) {
+    MOV_add(&coalesced_moves, src, dst);
+    add_worklist(u);
+    printf("Same. add to coalesced_moves and worklist\n");
+  }
+  else if (is_precolored(v) || is_adjacent(u, v)) {
+    MOV_add(&constrained_moves, src, dst);
+    add_worklist(u);
+    add_worklist(v);
+    printf("Coalesced. add to coalesced_moves and worklist\n");
+  }
+  else if ((is_precolored(u) && is_all_adjs_ok(v, u)) ||
+           (!is_precolored(u) &&
+            conservative(G_union(adjacent(u), adjacent(v))))) {
+    MOV_add(&coalesced_moves, src, dst);
+    combine(u, v);
+    add_worklist(u);
+  }
+  else {
+    MOV_add(&active_moves, src, dst);
+    printf("Add to active_moves\n");
+  }
+  // }
+  // assert(!worklist_moves);
 }
 
 static G_nodeList
@@ -274,14 +275,29 @@ simplify()
 static TAB_table
 build_degreetable(G_nodeList nl)
 {
-  degree_ = TAB_empty(); // because we can't rmEdge(don't know how to
-                         // restore.. we build a virtual degree:
-                         // node-int map
+  // because we can't rmEdge(don't know how to
+  // restore.. we build a virtual degree:
+  // node-int map
+  degree_ = TAB_empty();
+
+  // The reason we need two degree table is simple:
+  // Our heuristic algorithm favors high-degree nodes.
+  // But a high-degree node will be built through
+  // coalescing, which is undesiring, for spill these
+  // nodes will cause all nodes coalesced to it to spill,
+  // which is costly. Or(if spill coalesced nodes is not
+  // implemented) we'll suffer infinite spilling,
+  // which is the bug I observed.
+  heuristic_degree_ = TAB_empty();
 
   for (; nl; nl = nl->tail) {
     //    assert(nl->head == t2n(n2t(nl->head)));
     TAB_enter(degree_, nl->head, (void*)(intptr_t)G_degree(
                                    nl->head)); // to appease compiler warnings..
+    TAB_enter(
+      heuristic_degree_, nl->head,
+      (void*)(intptr_t)G_degree(nl->head)); // to appease compiler warnings..
+
     printf("node:[t%d:%p].degree:%d\n", Temp_num(n2t(nl->head)), nl->head,
            G_degree(nl->head));
   }
@@ -481,7 +497,7 @@ heuristic(Temp_temp t, TAB_table degree)
 
 // select a potential spill node.
 static Temp_temp
-select_spill(TAB_table degree)
+select_spill()
 {
   Temp_tempList tl = spill_worklist;
   Temp_temp mintemp;
@@ -495,11 +511,11 @@ select_spill(TAB_table degree)
     // so we have to choose from them...
     tl = newly_created;
     newly_created = NULL;
-    assert(0 && "I don't want to see that..");
+    // assert(0 && "I don't want to see that..");
   }
 
   for (; tl; tl = tl->tail) {
-    val = heuristic(tl->head, degree);
+    val = heuristic(tl->head, heuristic_degree_);
     if (minval < 0 || val < minval) {
       mintemp = tl->head;
       minval = val;
@@ -507,6 +523,7 @@ select_spill(TAB_table degree)
   }
   deletee(&spill_worklist, mintemp);
   add(&simplify_worklist, mintemp);
+  freeze_moves(t2n(mintemp));
 
   printf("spill ");
   Temp_print(mintemp);
@@ -576,7 +593,12 @@ assign_colors(Temp_map initial, struct COL_result* ret)
     string alias_color = Temp_look(combine, n2t(get_alias(nl->head)));
     printf("alias %s:%d\n", alias_color, Temp_num(n2t(get_alias(nl->head))));
     assert(alias_color || inList(spilled_nodes, n2t(get_alias(nl->head))));
-    Temp_enter(combine, n2t(nl->head), alias_color);
+
+    // My alias spills, so I spill too.
+    if (!alias_color)
+      add(&spilled_nodes, n2t(nl->head));
+    else
+      Temp_enter(combine, n2t(nl->head), alias_color);
   }
 
   ret->spills = spilled_nodes;
@@ -598,11 +620,10 @@ make_worklist(G_nodeList nl)
     }
     else {
       add(&simplify_worklist, n2t(nl->head));
-      printf("add to simplify_worklist\n");
+      printf("add %d to simplify_worklist\n", Temp_num(n2t(nl->head)));
     }
   }
 }
-
 
 struct COL_result
 COL_color(G_graph ig, Temp_map initial, Temp_tempList regs, Live_moveList moves)
@@ -623,7 +644,7 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs, Live_moveList moves)
 
   G_show(stdout, nl, Temp_print);
 
-  TAB_table degree = build_degreetable(nl);
+  build_degreetable(nl);
 
   // it's assumed not delete any node.
   // now nl doesn't have any pre-colored node.
@@ -661,7 +682,7 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs, Live_moveList moves)
     else if (freeze_worklist)
       freeze();
     else if (spill_worklist)
-      select_spill(degree);
+      select_spill();
   }
 
   assign_colors(initial, &ret); // save spilling and color to ret.

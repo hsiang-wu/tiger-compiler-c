@@ -34,22 +34,15 @@ REGDEC(ebp);
 /*Lab5: Your implementation here.*/
 const int F_wordSize = 4;
 
-struct F_frame_
-{
+struct F_frame_ {
   Temp_label name;
   F_accessList accessList;
   int off;
 };
 
-struct F_access_
-{
-  enum
-  {
-    inFrame,
-    inReg
-  } kind;
-  union
-  {
+struct F_access_ {
+  enum { inFrame, inReg } kind;
+  union {
     int offset;    /* InFrame */
     Temp_temp reg; /* InReg */
   } u;
@@ -270,7 +263,8 @@ F_Exp(F_access acc, T_exp framePtr)
 {
   if (acc->kind == inFrame) {
     return T_Mem(T_Binop(T_plus, framePtr, T_Const(acc->u.offset)));
-  } else { // in register
+  }
+  else { // in register
     return T_Temp(acc->u.reg);
   }
 }
