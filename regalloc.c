@@ -143,7 +143,8 @@ RA_regAlloc(F_frame f, AS_instrList il)
     struct Live_graph livegraph = Live_liveness(flowgraph);
 
     Temp_tempList regs = F_registers();
-    struct COL_result cr = COL_color(livegraph.graph, F_tempMap, regs);
+    struct COL_result cr =
+      COL_color(livegraph.graph, F_tempMap, regs, livegraph.moves);
 
     ret.coloring = cr.coloring;
 

@@ -1,5 +1,5 @@
-a.out: main.o parse.o prabsyn.o y.tab.o lex.yy.o errormsg.o util.o table.o absyn.o symbol.o semant.o types.o env.o tree.o temp.o escape.o printtree.o frame.o translate.o canon.o codegen.o assem.o graph.o flowgraph.o liveness.o color.o regalloc.o
-	gcc -g main.o parse.o prabsyn.o y.tab.o lex.yy.o errormsg.o util.o table.o absyn.o symbol.o semant.o types.o env.o tree.o temp.o escape.o printtree.o frame.o translate.o canon.o codegen.o assem.o graph.o flowgraph.o liveness.o color.o regalloc.o
+a.out: main.o parse.o prabsyn.o y.tab.o lex.yy.o errormsg.o util.o table.o absyn.o symbol.o semant.o types.o env.o tree.o temp.o escape.o printtree.o frame.o translate.o canon.o codegen.o assem.o graph.o flowgraph.o liveness.o color.o regalloc.o move.o
+	gcc -g main.o parse.o prabsyn.o y.tab.o lex.yy.o errormsg.o util.o table.o absyn.o symbol.o semant.o types.o env.o tree.o temp.o escape.o printtree.o frame.o translate.o canon.o codegen.o assem.o graph.o flowgraph.o liveness.o color.o regalloc.o move.o
 
 main.o: main.c 
 	gcc -g -c main.c
@@ -82,6 +82,10 @@ absyn.o: absyn.h absyn.c
 	gcc -g -c absyn.c
 symbol.o: symbol.c symbol.h
 	gcc -g -c symbol.c
+
+#added
+move.o: move.c move.h
+	gcc -g -c move.c
 
 handin:
 	tar -czf id.name.tar.gz  absyn.[ch] errormsg.[ch] makefile gradeMe.sh parse.[ch] prabsyn.[ch] refs-5 symbol.[ch] table.[ch] testcases tiger.lex tiger.y util.[ch] env.[ch] semant.[ch] translate.[ch] *.h *.c

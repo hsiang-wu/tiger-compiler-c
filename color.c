@@ -2,6 +2,7 @@
 #include "table.h"
 
 #include "flowgraph.h"
+#include "move.h"
 
 #include "string.h"
 #include <stdint.h>
@@ -9,37 +10,218 @@
 #define K 7 // since we add %ebp as a temp. it can be 6 + 1 =7.
 
 // descibed in P251
-Temp_tempList simplify_worklist, worklist_moves, freeze_worklist,
-  spill_worklist;
+Temp_tempList simplify_worklist, freeze_worklist, spill_worklist;
+
+G_nodeList coalesced_nodes;
 G_nodeList select_stack;
+G_nodeList precolored_nodes;
+
+MOV_table move_table; // alias of movelist in book code.
+
+Live_moveList coalesced_moves, constrained_moves, frozen_moves, active_moves,
+  worklist_moves;
+
+static TAB_table degree_;
+static G_graph ig_;
 
 // convert a temp to a node.
 static G_node t2n(Temp_temp temp);
 #define n2t(node) G_nodeInfo(node)
 static void push_stack(G_nodeList* stack, G_node t);
 static void decre_degree(G_node);
+static int get_degree(G_node n);
 static void init_usesdefs(AS_instrList il);
+static bool is_moverelated(G_node n);
+static bool is_adjacent(G_node, G_node);
 static Temp_tempList assign_colors(Temp_map tmap);
+static Live_moveList node_moves(G_node n);
+static G_node get_alias(G_node n);
 
 // In printf(...), "%%" for "%". In char * consts, "%" for "%".
 static string colors[6] = { "%eax", "%ebx", "%ecx", "%edx", "%esi", "%edi" };
 
+static G_nodeList adjacent(G_node n);
+
+static void
+addedge(G_node u, G_node v)
+{
+  if (is_adjacent(u, v) && u != v) {
+    // TBD
+    // XXX: this changes graph.. is it OK?
+    G_addEdge(u, v);
+    TAB_enter(degree_, u, (void*)(intptr_t)TAB_look(degree_, u) + 1);
+    TAB_enter(degree_, v, (void*)(intptr_t)TAB_look(degree_, v) + 1);
+  }
+}
+
+static void
+freeze_moves(G_node u)
+{
+  Live_moveList ml = node_moves(u);
+  G_node src, dst, v;
+  for (; ml; ml = ml->tail) {
+    src = ml->src;
+    dst = ml->dst;
+    if (get_alias(src) == get_alias(dst))
+      v = get_alias(src);
+    else
+      v = get_alias(dst);
+    MOV_delete(&active_moves, src, dst);
+    MOV_add(&frozen_moves, src, dst);
+    if (!node_moves(v) && get_degree(v) < K) {
+      deletee(&freeze_worklist, n2t(v));
+      add(&simplify_worklist, n2t(v));
+    }
+  }
+}
+
 static void
 freeze()
 {
-  assert(0 && "not implemented!");
+  assert(freeze_worklist);
+  Temp_temp u = freeze_worklist->head;
+  deletee(&freeze_worklist, u);
+  add(&spill_worklist, u);
+  freeze_moves(t2n(u));
+}
+
+TAB_table alias_table;
+
+inline static G_node
+alias(G_node n)
+{
+  return TAB_look(alias_table, n);
+}
+
+static G_node
+get_alias(G_node n)
+{
+  if (G_inlist(coalesced_nodes, n))
+    return get_alias(alias(n));
+  else
+    return n;
+}
+
+static bool
+is_precolored(G_node n)
+{
+  return G_inlist(precolored_nodes, n);
+}
+
+static bool
+is_adjacent(G_node n1, G_node n2)
+{
+  // TBD: add bit matrix
+  return G_inlist(G_adj(n1), n2);
+}
+
+// forall t in adjacent(v), OK(t,u)
+static bool
+is_all_adjs_ok(G_node u, G_node v)
+{
+  G_nodeList adjl = adjacent(u);
+  G_node t;
+  for (; adjl; adjl = adjl->tail) {
+    t = adjl->head;
+    // OK
+    if (get_degree(t) < K || is_precolored(t) || is_adjacent(t, v)) {
+      continue;
+    } else {
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
+static bool
+conservative(G_nodeList nl)
+{
+  int k = 0;
+  for (; nl; nl = nl->tail) {
+    k += (get_degree(nl->head) >= K);
+  }
+  return (k < K);
+}
+
+static void
+add_worklist(G_node u)
+{
+  if (is_precolored(u) && !is_moverelated(u) && get_degree(u) < K) {
+    deletee(&freeze_worklist, n2t(u));
+    add(&simplify_worklist, n2t(u));
+  }
+}
+
+static void
+combine(G_node u, G_node v)
+{
+  if (inList(freeze_worklist, n2t(v))) {
+    deletee(&freeze_worklist, n2t(v));
+  } else {
+    deletee(&spill_worklist, n2t(v));
+  }
+  G_add(&coalesced_nodes, v);
+  TAB_enter(alias_table, v, u);
+
+  // ambiguous in book.
+  // node_moves = G_union(node_moves(u), node_moves(v));
+  MOV_append(move_table, u, MOV_look(move_table, v));
+  G_nodeList nl = adjacent(v);
+  for (; nl; nl = nl->tail) {
+    addedge(nl->head, u);
+    decre_degree(nl->head);
+  }
+  if (get_degree(u) >= K && inList(freeze_worklist, n2t(u))) {
+    deletee(&freeze_worklist, n2t(u));
+    add(&spill_worklist, n2t(u));
+  }
 }
 
 static void
 coalesce()
 {
+  G_node x, y, u, v, src, dst;
+  Live_moveList ml = worklist_moves;
+  for (; ml; ml = ml->tail) {
+    src = ml->src;
+    dst = ml->dst;
+    x = get_alias(src);
+    y = get_alias(dst);
+
+    if (is_precolored(y)) {
+      u = y;
+      v = x;
+    } else {
+      u = x;
+      v = y;
+    }
+
+    worklist_moves = ml->tail; // remove m
+    if (u == v) {
+      MOV_add(&coalesced_moves, src, dst);
+      add_worklist(u);
+    } else if (is_precolored(v) || is_adjacent(u, v)) {
+      MOV_add(&constrained_moves, src, dst);
+      add_worklist(u);
+      add_worklist(v);
+    } else if ((is_precolored(u) && is_all_adjs_ok(v, u)) ||
+               (!is_precolored(u) &&
+                conservative(G_union(adjacent(u), adjacent(v))))) {
+      MOV_add(&coalesced_moves, src, dst);
+      combine(u, v);
+      add_worklist(u);
+    } else {
+      MOV_add(&active_moves, src, dst);
+    }
+  }
   assert(0 && "not implemented!");
 }
 
 static G_nodeList
 adjacent(G_node n)
 {
-  return G_except(G_adj(n), select_stack);
+  // adjlist[n] \ (selectstack U coalescenodes)
+  return G_except(G_except(G_adj(n), select_stack), coalesced_nodes);
 }
 
 static void
@@ -57,9 +239,8 @@ simplify()
   Temp_print(t);
 }
 
-static TAB_table degree_;
 static TAB_table
-degreeTable(G_nodeList nl)
+build_degreetable(G_nodeList nl)
 {
   degree_ = TAB_empty(); // because we can't rmEdge(don't know how to
                          // restore.. we build a virtual degree:
@@ -74,6 +255,39 @@ degreeTable(G_nodeList nl)
   return degree_;
 }
 
+static Live_moveList
+node_moves(G_node n)
+{
+  return MOV_intersection(MOV_look(move_table, n),
+                          MOV_union(active_moves, worklist_moves));
+}
+
+static bool
+is_moverelated(G_node n)
+{
+  return (node_moves(n) != NULL);
+}
+
+static void
+enable_moves(G_nodeList nl)
+{
+  for (; nl; nl = nl->tail) {
+    Live_moveList movs = node_moves(nl->head);
+    for (; movs; movs = movs->tail) {
+      if (MOV_inlist(active_moves, movs->src, movs->dst)) {
+        MOV_delete(&active_moves, movs->src, movs->dst);
+        MOV_add(&worklist_moves, movs->src, movs->dst);
+      }
+    }
+  }
+}
+
+static int
+get_degree(G_node n)
+{
+  return (intptr_t)TAB_look(degree_, n);
+}
+
 static void
 decre_degree(G_node n)
 {
@@ -83,7 +297,14 @@ decre_degree(G_node n)
   if (newd == K - 1) {
     deletee(&spill_worklist, n2t(n));
 
-    add(&simplify_worklist, n2t(n));
+    G_nodeList ns = adjacent(n);
+    G_add(&ns, n);
+    enable_moves(ns);
+
+    if (is_moverelated(n2t(n)))
+      add(&freeze_worklist, n2t(n));
+    else
+      add(&simplify_worklist, n2t(n));
   }
 }
 
@@ -172,6 +393,7 @@ except_precolor(G_nodeList nl, Temp_tempList precolored)
         head = newnl = G_NodeList(nl->head, NULL);
       }
     } else {
+      G_add(&precolored_nodes, nl->head);
       printf("delete:");
       Temp_print(reg);
     }
@@ -298,12 +520,15 @@ assign_colors(Temp_map tmap)
 static void
 make_worklist(G_graph g)
 {
-  simplify_worklist = worklist_moves = freeze_worklist = spill_worklist = NULL;
+  simplify_worklist = freeze_worklist = spill_worklist = NULL;
+  worklist_moves = NULL;
   G_nodeList nl = G_nodes(g);
   for (; nl; nl = nl->tail) {
     if (G_degree(nl->head) < K) {
       add(&simplify_worklist, n2t(nl->head));
       printf("add to simplify_worklist\n");
+    } else if (is_moverelated(nl->head)) {
+      add(&freeze_worklist, n2t(nl->head));
     } else {
       add(&spill_worklist, n2t(nl->head));
       printf("add to spill_worklist\n");
@@ -312,7 +537,7 @@ make_worklist(G_graph g)
 }
 
 struct COL_result
-COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
+COL_color(G_graph ig, Temp_map initial, Temp_tempList regs, Live_moveList moves)
 {
   // your code here.
   struct COL_result ret;
@@ -328,11 +553,19 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs)
 
   G_nodeList nl = G_nodes(ig);
 
-  TAB_table degree = degreeTable(nl);
+  TAB_table degree = build_degreetable(nl);
 
   // it's assumed not delete any node.
   // now nl doesn't have any pre-colored node.
+  //
+  // Precolored nodelist is created in this call.
   nl = except_precolor(nl, regs);
+
+  // build table from moves.
+  move_table = MOV_Table(moves);
+  worklist_moves = moves;
+  alias_table = TAB_empty();
+  ig_ = ig;
 
   make_worklist(ig);
   select_stack = NULL;

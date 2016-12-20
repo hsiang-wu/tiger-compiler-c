@@ -15,12 +15,14 @@
 #include "util.h"
 #include <stdio.h>
 
-struct G_graph_ {
+struct G_graph_
+{
   int nodecount;
   G_nodeList mynodes, mylast;
 };
 
-struct G_node_ {
+struct G_node_
+{
   G_graph mygraph;
   int mykey;
   G_nodeList succs;
@@ -235,6 +237,16 @@ G_except(G_nodeList n1, G_nodeList n2)
   return r;
 }
 
+void
+G_add(G_nodeList* nl, G_node n)
+{
+  if (*nl) {
+    if (!G_inlist(*nl, n)) *nl = G_NodeList(n, *nl);
+  } else {
+    *nl = G_NodeList(n, NULL);
+  }
+}
+
 bool
 G_inlist(G_nodeList nl, G_node n)
 {
@@ -242,4 +254,30 @@ G_inlist(G_nodeList nl, G_node n)
     if (nl->head == n) return TRUE;
   }
   return FALSE;
+}
+
+static G_nodeList
+copylist(G_nodeList n)
+{
+  G_nodeList tl = NULL, hd = NULL;
+  for (; n; n = n->tail) {
+    if (!tl)
+      hd = tl = G_NodeList(n->head, NULL);
+    else
+      tl = tl->tail = G_NodeList(n->head, NULL);
+  }
+  return hd;
+}
+
+G_nodeList
+G_union(G_nodeList n1, G_nodeList n2)
+{
+  if (!n1) return n2;
+
+  G_nodeList r = copylist(n1);
+  for (; n2; n2 = n2->tail) {
+    if (!n1 || !G_inlist(n1, n2->head)) r = G_NodeList(n2->head, r);
+  }
+
+  return r;
 }

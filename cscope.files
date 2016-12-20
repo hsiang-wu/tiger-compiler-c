@@ -24,6 +24,8 @@
 ./liveness.c
 ./liveness.h
 ./main.c
+./move.c
+./move.h
 ./parse.c
 ./parse.h
 ./prabsyn.c
