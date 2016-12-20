@@ -37,8 +37,7 @@ MOV_delete(Live_moveList* pm, G_node src, G_node dst)
 void
 MOV_add(Live_moveList* pm, G_node src, G_node dst)
 {
-  assert(!MOV_inlist(*pm, src, dst));
-  *pm = Live_MoveList(src, dst, *pm);
+  if (!MOV_inlist(*pm, src, dst)) *pm = Live_MoveList(src, dst, *pm);
 }
 
 Live_moveList

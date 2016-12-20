@@ -43,11 +43,7 @@ rewrite_inst(Temp_tempList tl, Temp_temp oldt, Temp_temp newt)
   assert(D_found);
 }
 
-enum
-{
-  AS_USE,
-  AS_DEF
-};
+enum { AS_USE, AS_DEF };
 static void
 rewrite(Temp_temp spill, AS_instrList il, F_frame f)
 {
@@ -77,42 +73,39 @@ rewrite(Temp_temp spill, AS_instrList il, F_frame f)
       case I_LABEL:
         continue;
     }
-    for (; uses; uses = uses->tail) {
-      if (spill == uses->head) {
-        assert(!D_use_before_def && "Use before def!");
-        if (!D_use_before_def) {
+    bool inuse = inList(uses, spill);
+    bool indef = inList(defs, spill);
+    if (inuse || indef) {
+      // BUG FIXED:
+      // can't rewrite "subl `s0, `d0"
+      // (def:t126, use:t128, t126) to (def:t151, use:t128, t150)
+      // because there's s1 == d0
+      //
+      // So add this case.
+      D_use_before_def = FALSE;
+      Temp_temp t0 = Temp_newtemp();
+      char* buffer;
 
-          Temp_temp t0 = Temp_newtemp();
-          rewrite_inst(uses, spill, t0);
-          // load before use.
-          char* buffer = checked_malloc(64);
-          sprintf(buffer, "movl %d(%%ebp), `d0 #spill\n", F_frameOffset(inmem));
-          printf("%s%d\n", buffer, Temp_num(t0));
-          insert_after(last, AS_Oper(buffer, L(t0, NULL), NULL, NULL));
-
-          // help select_spill() avoid choosing this
-          // newly created temps.
-          COL_add_newly_created(t0);
-        }
-        // replace spill with t0 in the remaining of uses list.
-        break;
-      }
-    }
-    for (; defs; defs = defs->tail) {
-      if (spill == defs->head) {
-        D_use_before_def = FALSE;
+      if (indef) {
         // store after use
-        char* buffer = checked_malloc(64);
-        Temp_temp t0 = Temp_newtemp();
         // replace spill with t0.
+        buffer = checked_malloc(64);
         rewrite_inst(defs, spill, t0);
         sprintf(buffer, "movl `s0, %d(%%ebp) #spill\n", F_frameOffset(inmem));
         insert_after(il, AS_Oper(buffer, NULL, L(t0, NULL), NULL));
         printf("%s%d\n", buffer, Temp_num(t0));
-
-        COL_add_newly_created(t0);
-        break;
       }
+      if (inuse) {
+
+        // load before use.
+        buffer = checked_malloc(64);
+        rewrite_inst(uses, spill, t0);
+        sprintf(buffer, "movl %d(%%ebp), `d0 #spill\n", F_frameOffset(inmem));
+        insert_after(last, AS_Oper(buffer, L(t0, NULL), NULL, NULL));
+        printf("%s%d\n", buffer, Temp_num(t0));
+      }
+
+      COL_add_newly_created(t0);
     }
   }
 }
