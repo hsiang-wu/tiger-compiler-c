@@ -574,7 +574,8 @@ assign_colors(Temp_map initial, struct COL_result* ret)
     printf("%s:%d\n", this_color, Temp_num(n2t(nl->head)));
     assert(!this_color);
     string alias_color = Temp_look(combine, n2t(get_alias(nl->head)));
-    assert(alias_color);
+    printf("alias %s:%d\n", alias_color, Temp_num(n2t(get_alias(nl->head))));
+    assert(alias_color || inList(spilled_nodes, n2t(get_alias(nl->head))));
     Temp_enter(combine, n2t(nl->head), alias_color);
   }
 
