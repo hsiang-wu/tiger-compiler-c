@@ -21,6 +21,7 @@
     }                                                                          \
     return name;                                                               \
   }
+
 REGDEC(eax);
 REGDEC(ebx);
 REGDEC(ecx);
@@ -214,6 +215,16 @@ F_procEntryExit1(F_frame frame, T_stm stm)
 
   // TRUE: always move to stack
   // FALSE: only to stack when there's high register pressure  (during spilling)
+  //
+  // XXX: Try this and you'll find some bugs in small testcase. The callee-save
+  // will not be spilled and the spilling loops forever.
+  // This might be caused by naive coalesce move choosing or heuristic
+  // algorithm.
+  //
+  // Special case for the 3 registers will solve the problem...
+  // But don't have time in the lab...Maybe for someone with
+  // further interest?
+  // bool tostack = FALSE;
   bool tostack = TRUE;
 
   F_access f_ebx = F_allocLocal(frame, tostack); // place callee-save registers
@@ -230,17 +241,12 @@ F_procEntryExit1(F_frame frame, T_stm stm)
   save = T_Seq(T_Move(F_Exp(f_esi, T_Temp(F_FP())), T_Temp(esi())), save);
   save = T_Seq(T_Move(F_Exp(f_edi, T_Temp(F_FP())), T_Temp(edi())), save);
 
-  // return T_Seq(T_Label(frame->name), stm);
   return T_Seq(T_Label(frame->name), save);
 }
 
 Temp_temp
 F_FP(void)
 {
-  // static Temp_temp fp = NULL;
-  // if (fp == NULL)
-  //  fp = Temp_newtemp();
-  // return fp;
   return ebp();
 }
 
@@ -272,17 +278,6 @@ F_Exp(F_access acc, T_exp framePtr)
 T_exp
 F_externalCall(string str, T_expList args)
 {
-
-// T_stm passparam = NULL;
-// for (; args; args=args->tail) { // reverse the reverse. a stack shuold be
-// arg3..arg2..arg1..eip..ebp
-//  if (!passparam) {
-//    passparam = T_Push(args->head);
-//  } else {
-//    passparam = T_Seq(passparam, T_Push(args->head));
-//  }
-//}
-
 #ifdef __APPLE__
   char* buffer = checked_malloc(64);
   buffer[0] = '_';

@@ -44,11 +44,7 @@ rewrite_inst(Temp_tempList tl, Temp_temp oldt, Temp_temp newt)
   assert(D_found);
 }
 
-enum
-{
-  AS_USE,
-  AS_DEF
-};
+enum { AS_USE, AS_DEF };
 static void
 rewrite(Temp_temp spill, AS_instrList il, F_frame f)
 {
@@ -96,7 +92,7 @@ rewrite(Temp_temp spill, AS_instrList il, F_frame f)
         // replace spill with t0.
         buffer = checked_malloc(64);
         rewrite_inst(defs, spill, t0);
-        sprintf(buffer, "movl `s0, %d(%%ebp) #spill\n", F_frameOffset(inmem));
+        sprintf(buffer, "\tmovl `s0, %d(%%ebp) #spill\n", F_frameOffset(inmem));
         insert_after(il, AS_Oper(buffer, NULL, L(t0, NULL), NULL));
         printf("%s%d\n", buffer, Temp_num(t0));
       }
@@ -105,7 +101,7 @@ rewrite(Temp_temp spill, AS_instrList il, F_frame f)
         // load before use.
         buffer = checked_malloc(64);
         rewrite_inst(uses, spill, t0);
-        sprintf(buffer, "movl %d(%%ebp), `d0 #spill\n", F_frameOffset(inmem));
+        sprintf(buffer, "\tmovl %d(%%ebp), `d0 #spill\n", F_frameOffset(inmem));
         insert_after(last, AS_Oper(buffer, L(t0, NULL), NULL, NULL));
         printf("%s%d\n", buffer, Temp_num(t0));
       }
@@ -162,7 +158,11 @@ RA_regAlloc(F_frame f, AS_instrList il)
   struct RA_result ret;
 
   int debug = 0;
-  int upper = 5;
+  int upper = 10;
+
+  extern Temp_tempList newly_created; // color.c
+  newly_created = NULL;
+
   for (; debug < upper; debug++) {
     G_graph flowgraph = FG_AssemFlowGraph(il, f);
     struct Live_graph livegraph = Live_liveness(flowgraph);

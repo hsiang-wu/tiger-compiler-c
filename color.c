@@ -1,8 +1,9 @@
 #include "color.h"
-#include "table.h"
 
 #include "flowgraph.h"
 #include "move.h"
+#include "table.h"
+#include "util.h"
 
 #include "string.h"
 #include <stdint.h>
@@ -15,6 +16,8 @@ Temp_tempList simplify_worklist, freeze_worklist, spill_worklist;
 static G_nodeList coalesced_nodes;
 static G_nodeList select_stack;
 static G_nodeList precolored_nodes;
+
+static G_bmat adjset;
 
 MOV_table move_table; // alias of movelist in book code.
 
@@ -32,8 +35,6 @@ inline static Temp_temp
 n2t(G_node node)
 {
   Temp_temp t = G_nodeInfo(node);
-  //  printf("n2t:[t%d:%p]\n", Temp_num(t), node);
-  assert(t2n(t) == node);
   return t;
 }
 
@@ -59,6 +60,10 @@ addedge(G_node u, G_node v)
     // TBD
     // XXX: this changes graph.. is it OK?
     printf("Add edge t%d to t%d\n", Temp_num(n2t(u)), Temp_num(n2t(v)));
+
+    G_bmenter(adjset, u, v, TRUE);
+    G_bmenter(adjset, v, u, TRUE);
+
     G_addEdge(v, u);
     TAB_enter(degree_, u, (void*)(intptr_t)TAB_look(degree_, u) + 1);
     TAB_enter(degree_, v, (void*)(intptr_t)TAB_look(degree_, v) + 1);
@@ -106,7 +111,7 @@ alias(G_node n)
   return r;
 }
 
-static G_node
+inline static G_node
 get_alias(G_node n)
 {
   if (G_inlist(coalesced_nodes, n))
@@ -115,21 +120,25 @@ get_alias(G_node n)
     return n;
 }
 
-static bool
+inline static bool
 is_precolored(G_node n)
 {
   return G_inlist(precolored_nodes, n);
 }
 
-static bool
+// Use bit matrix for fast lookup.
+inline static bool
 is_adjacent(G_node n1, G_node n2)
 {
-  // TBD: add bit matrix
-  return G_inlist(G_adj(n1), n2);
+  // bool r = G_inlist(G_adj(n1), n2); // old way
+  // assert(r == G_bmlook(adjset, n1, n2));
+
+  bool r = G_bmlook(adjset, n1, n2);
+  return r;
 }
 
 // forall t in adjacent(v), OK(t,u)
-static bool
+inline static bool
 is_all_adjs_ok(G_node u, G_node v)
 {
   G_nodeList adjl = adjacent(u);
@@ -139,14 +148,15 @@ is_all_adjs_ok(G_node u, G_node v)
     // OK
     if (get_degree(t) < K || is_precolored(t) || is_adjacent(t, v)) {
       continue;
-    } else {
+    }
+    else {
       return FALSE;
     }
   }
   return TRUE;
 }
 
-static bool
+inline static bool
 conservative(G_nodeList nl)
 {
   int k = 0;
@@ -171,7 +181,8 @@ combine(G_node u, G_node v)
   printf("combine %d and %d\n", Temp_num(n2t(u)), Temp_num(n2t(v)));
   if (inList(freeze_worklist, n2t(v))) {
     deletee(&freeze_worklist, n2t(v));
-  } else {
+  }
+  else {
     deletee(&spill_worklist, n2t(v));
   }
   assert(!is_precolored(v));
@@ -214,7 +225,8 @@ coalesce()
   if (is_precolored(y)) {
     u = y;
     v = x;
-  } else {
+  }
+  else {
     u = x;
     v = y;
   }
@@ -225,18 +237,21 @@ coalesce()
     MOV_add(&coalesced_moves, src, dst);
     add_worklist(u);
     printf("Same. add to coalesced_moves and worklist\n");
-  } else if (is_precolored(v) || is_adjacent(u, v)) {
+  }
+  else if (is_precolored(v) || is_adjacent(u, v)) {
     MOV_add(&constrained_moves, src, dst);
     add_worklist(u);
     add_worklist(v);
     printf("Coalesced. add to coalesced_moves and worklist\n");
-  } else if ((is_precolored(u) && is_all_adjs_ok(v, u)) ||
-             (!is_precolored(u) &&
-              conservative(G_union(adjacent(u), adjacent(v))))) {
+  }
+  else if ((is_precolored(u) && is_all_adjs_ok(v, u)) ||
+           (!is_precolored(u) &&
+            conservative(G_union(adjacent(u), adjacent(v))))) {
     MOV_add(&coalesced_moves, src, dst);
     combine(u, v);
     add_worklist(u);
-  } else {
+  }
+  else {
     MOV_add(&active_moves, src, dst);
     printf("Add to active_moves\n");
   }
@@ -374,7 +389,8 @@ delete_node(G_nodeList* nl, G_nodeList last, TAB_table degree)
   if (last) { // remove this node
     tmp = last->tail->head;
     last->tail = last->tail->tail;
-  } else {
+  }
+  else {
     tmp = (*nl)->head;
     *nl = (*nl)->tail;
   }
@@ -439,10 +455,12 @@ except_precolor(G_nodeList nl, Temp_tempList precolored)
     if (!inList(precolored, reg)) {
       if (newnl) {
         newnl = newnl->tail = G_NodeList(nl->head, NULL);
-      } else {
+      }
+      else {
         head = newnl = G_NodeList(nl->head, NULL);
       }
-    } else {
+    }
+    else {
       printf("delete:");
       Temp_print(reg);
     }
@@ -466,7 +484,7 @@ t2n(Temp_temp temp)
 
 // Resulting from previously spilled registers.
 // Should avoid choosing them
-static Temp_tempList newly_created = NULL;
+Temp_tempList newly_created = NULL;
 void
 COL_add_newly_created(Temp_temp t)
 {
@@ -610,14 +628,51 @@ make_worklist(G_nodeList nl)
     if (G_degree(nl->head) >= K) {
       add(&spill_worklist, n2t(nl->head));
       printf("add to spill_worklist\n");
-    } else if (is_moverelated(nl->head)) {
+    }
+    else if (is_moverelated(nl->head)) {
       add(&freeze_worklist, n2t(nl->head));
       printf("add to freeze_worklist\n");
-    } else {
+    }
+    else {
       add(&simplify_worklist, n2t(nl->head));
       printf("add %d to simplify_worklist\n", Temp_num(n2t(nl->head)));
     }
   }
+}
+
+static void
+D_check()
+{
+  printf("[DEBUG] K=%d\n", K);
+
+  G_nodeList nl = G_nodes(ig_), D_nl, nl1, nl2;
+  D_nl = nl;
+  printf("check n2t and t2n:\n");
+  for (; D_nl; D_nl = D_nl->tail) {
+    Temp_temp t = n2t(D_nl->head); // check
+    //  printf("n2t:[t%d:%p]\n", Temp_num(t), node);
+    assert(t2n(t) == D_nl->head && "n2t and t2n error.");
+  }
+
+  printf("[DEBUG] show graph:\n");
+  G_show(stdout, nl, Temp_print);
+
+  printf("[DEBUG] Check bitmatrix:\n");
+  for (nl1 = nl; nl1; nl1 = nl1->tail) {
+    for (nl2 = nl; nl2; nl2 = nl2->tail) {
+      bool in = G_inlist(G_adj(nl2->head), nl1->head);
+      bool bmin = G_bmlook(adjset, nl1->head, nl2->head);
+      if (in != bmin) {
+        printf("\n[DEBUG] Bad: bitmatrix error at t%d - t%d, expect %d\n",
+               Temp_num(n2t(nl1->head)), Temp_num(n2t(nl2->head)), in);
+
+        assert(0 && "Bit matrix check error");
+      }
+      printf("%s", in ? "." : "x");
+    }
+    printf("\n");
+  }
+  printf("[DEBUG] pass all check\n");
 }
 
 struct COL_result
@@ -626,43 +681,27 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs, Live_moveList moves)
   // your code here.
   struct COL_result ret;
 
-  // start simplify
-  printf("K=%d\n", K);
+  // make it global
+  ig_ = ig;
+  adjset = G_Bitmatrix(ig); // construct bit matrix
 
-  G_nodeList nl = G_nodes(ig);
+  // debug checks
+  D_check();
 
-  G_nodeList D_nl = nl;
-  printf("check n2t and t2n:\n");
-  for (; D_nl; D_nl = D_nl->tail) {
-    n2t(D_nl->head); // check
-  }
-
-  G_show(stdout, nl, Temp_print);
-
-  build_degreetable(nl);
-
-  // it's assumed not delete any node.
-  // now nl doesn't have any pre-colored node.
-  //
-  // Precolored nodelist is created in this call.
-  precolored_nodes = NULL;
-  nl = except_precolor(nl, regs);
-
-  // build table from moves.
+  // Build table from moves.
   move_table = MOV_Table(moves);
   alias_table = TAB_empty();
-  ig_ = ig;
-
-  // clear all static variable
   worklist_moves = moves;
   coalesced_moves = constrained_moves = frozen_moves = active_moves = NULL;
 
+  // After build degree table. Make nl have no pre-colored node.
+  G_nodeList nl = G_nodes(ig);
+  build_degreetable(nl);
+  nl = except_precolor(nl, regs);
   make_worklist(nl);
 
-  select_stack = NULL;
-  coalesced_nodes = NULL;
-
-  precolored_nodes = NULL;
+  // Clear all static variable
+  select_stack = coalesced_nodes = precolored_nodes = NULL;
   for (; regs; regs = regs->tail) {
     G_add(&precolored_nodes, t2n(regs->head));
   }
@@ -682,7 +721,8 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs, Live_moveList moves)
 
   assign_colors(initial, &ret); // save spilling and color to ret.
 
-  unionn(newly_created, ret.spills);
+  // XXX:this is redundant?
+  //  unionn(newly_created, ret.spills);
 
   printf("dump coloring map:\n");
   Temp_dumpMap(stdout, ret.coloring);

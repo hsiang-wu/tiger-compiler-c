@@ -15,14 +15,12 @@
 #include "util.h"
 #include <stdio.h>
 
-struct G_graph_
-{
+struct G_graph_ {
   int nodecount;
   G_nodeList mynodes, mylast;
 };
 
-struct G_node_
-{
+struct G_node_ {
   G_graph mygraph;
   int mykey;
   G_nodeList succs;
@@ -242,7 +240,8 @@ G_add(G_nodeList* nl, G_node n)
 {
   if (*nl) {
     if (!G_inlist(*nl, n)) *nl = G_NodeList(n, *nl);
-  } else {
+  }
+  else {
     *nl = G_NodeList(n, NULL);
   }
 }
@@ -280,4 +279,34 @@ G_union(G_nodeList n1, G_nodeList n2)
   }
 
   return r;
+}
+
+G_bmat
+G_Bitmatrix(G_graph g)
+{
+  U_bmat bm = U_Bmat(g->nodecount);
+  G_nodeList l1, l2;
+  for (l1 = G_nodes(g); l1; l1 = l1->tail) {
+    for (l2 = G_nodes(g); l2; l2 = l2->tail) {
+      int n1 = l1->head->mykey;
+      int n2 = l2->head->mykey;
+      bool isadj = G_goesTo(l1->head, l2->head) || G_goesTo(l2->head, l1->head);
+      if (isadj) printf("%d - %d", n1, n2);
+      bmenter(bm, n1, n2, isadj);
+      bmenter(bm, n2, n1, isadj);
+    }
+  }
+  return bm;
+}
+
+bool
+G_bmlook(G_bmat bm, G_node n1, G_node n2)
+{
+  return bmlook(bm, n1->mykey, n2->mykey);
+}
+
+void
+G_bmenter(G_bmat bm, G_node n1, G_node n2, bool v)
+{
+  bmenter(bm, n1->mykey, n2->mykey, v);
 }

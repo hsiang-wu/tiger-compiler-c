@@ -1,6 +1,7 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 #include "temp.h"
+#include "util.h"
 /*
  * graph.h - Abstract Data Type (ADT) for directed graphs
  */
@@ -9,10 +10,9 @@ typedef struct G_graph_* G_graph; /* The "graph" type */
 typedef struct G_node_* G_node;   /* The "node" type */
 
 typedef struct G_nodeList_* G_nodeList;
-struct G_nodeList_
-{
-  G_node head;
-  G_nodeList tail;
+struct G_nodeList_ {
+    G_node head;
+    G_nodeList tail;
 };
 
 /* Make a new graph */
@@ -74,4 +74,11 @@ G_nodeList G_except(G_nodeList n1, G_nodeList n2);
 G_nodeList G_union(G_nodeList n1, G_nodeList n2);
 bool G_inlist(G_nodeList nl, G_node n);
 void G_add(G_nodeList* nl, G_node n);
+
+typedef U_bmat G_bmat;
+// coalesce: construct a bit matrix from G_graph
+G_bmat G_Bitmatrix(G_graph);
+bool G_bmlook(G_bmat, G_node, G_node);
+void G_bmenter(G_bmat, G_node, G_node, bool v);
+
 #endif
