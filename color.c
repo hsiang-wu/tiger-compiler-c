@@ -201,8 +201,11 @@ combine(G_node u, G_node v)
   for (; nl; nl = nl->tail) {
     printf("combine t%d's adjacents: t%d, add it to t%d's\n", Temp_num(n2t(v)),
            Temp_num(n2t(nl->head)), Temp_num(n2t(u)));
-    addedge(nl->head, u);
+    // XXX: Different from book. Switch the sentences.
+    // Otherwise the "delete from spill worklist" in decre_degree()
+    // might be triggerd twice.
     decre_degree(nl->head);
+    addedge(nl->head, u);
   }
   if (get_degree(u) >= K && WL_in(freeze_worklist, n2w(u))) {
     WL_delete(&freeze_worklist, n2w(u));
@@ -360,16 +363,18 @@ decre_degree(G_node n)
       printf("delete a precolored node...\n");
       return;
     }
-    WL_delete(&spill_worklist, n2w(n));
-
     G_nodeList ns = adjacent(n);
     G_add(&ns, n);
     enable_moves(ns);
+
+    //    if (WL_in(spill_worklist, n2w(n))) {
+    WL_delete(&spill_worklist, n2w(n));
 
     if (is_moverelated(n))
       WL_add(&freeze_worklist, n2w(n));
     else
       WL_add(&simplify_worklist, n2w(n));
+    //   }
   }
 }
 
