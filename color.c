@@ -85,7 +85,7 @@ freeze_moves(G_node u)
       v = get_alias(dst);
     MOV_delete(&active_moves, src, dst);
     MOV_add(&frozen_moves, src, dst);
-    if (!node_moves(v) && get_degree(v) < K) {
+    if (!node_moves(v) && get_degree(v) < K && u != v) {
       WL_delete(&freeze_worklist, n2w(v));
       WL_add(&simplify_worklist, n2w(v));
     }
@@ -97,7 +97,7 @@ freeze()
 {
   assert(freeze_worklist);
   worklist_t u = WL_pop(&freeze_worklist);
-  WL_add(&spill_worklist, u);
+  WL_add(&simplify_worklist, u);
   freeze_moves(t2n(u->t));
 }
 
