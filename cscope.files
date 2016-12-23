@@ -16,8 +16,7 @@
 ./errormsg.c
 ./escape.c
 ./graph.c
-./y.tab.c
-./lex.yy.c
+./worklist.c
 ./semant.h
 ./frame.h
 ./flowgraph.c
@@ -42,9 +41,9 @@
 ./liveness.h
 ./prabsyn.h
 ./escape.h
+./worklist.h
 ./errormsg.h
 ./move.c
-./y.tab.h
 ./printtree.c
 ./env.h
 ./symbol.c

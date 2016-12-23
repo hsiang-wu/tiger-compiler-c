@@ -1,5 +1,5 @@
-a.out: main.o parse.o prabsyn.o y.tab.o lex.yy.o errormsg.o util.o table.o absyn.o symbol.o semant.o types.o env.o tree.o temp.o escape.o printtree.o frame.o translate.o canon.o codegen.o assem.o graph.o flowgraph.o liveness.o color.o regalloc.o move.o
-	gcc -g main.o parse.o prabsyn.o y.tab.o lex.yy.o errormsg.o util.o table.o absyn.o symbol.o semant.o types.o env.o tree.o temp.o escape.o printtree.o frame.o translate.o canon.o codegen.o assem.o graph.o flowgraph.o liveness.o color.o regalloc.o move.o
+a.out: main.o parse.o prabsyn.o y.tab.o lex.yy.o errormsg.o util.o table.o absyn.o symbol.o semant.o types.o env.o tree.o temp.o escape.o printtree.o frame.o translate.o canon.o codegen.o assem.o graph.o flowgraph.o liveness.o color.o regalloc.o move.o worklist.o
+	gcc -g main.o parse.o prabsyn.o y.tab.o lex.yy.o errormsg.o util.o table.o absyn.o symbol.o semant.o types.o env.o tree.o temp.o escape.o printtree.o frame.o translate.o canon.o codegen.o assem.o graph.o flowgraph.o liveness.o color.o regalloc.o move.o worklist.o
 
 main.o: main.c 
 	gcc -g -c main.c
@@ -86,6 +86,8 @@ symbol.o: symbol.c symbol.h
 #added
 move.o: move.c move.h
 	gcc -g -c move.c
+worklist.o: worklist.c worklist.h
+	gcc -g -c worklist.c
 
 handin:
 	tar -czf id.name.tar.gz  absyn.[ch] errormsg.[ch] makefile gradeMe.sh parse.[ch] prabsyn.[ch] refs-6 symbol.[ch] table.[ch] testcases tiger.lex tiger.y util.[ch] env.[ch] semant.[ch] translate.[ch] *.h *.c

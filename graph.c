@@ -291,7 +291,7 @@ G_Bitmatrix(G_graph g)
       int n1 = l1->head->mykey;
       int n2 = l2->head->mykey;
       bool isadj = G_goesTo(l1->head, l2->head) || G_goesTo(l2->head, l1->head);
-      if (isadj) printf("%d - %d", n1, n2);
+      //if (isadj) printf("%d - %d", n1, n2);
       bmenter(bm, n1, n2, isadj);
       bmenter(bm, n2, n1, isadj);
     }

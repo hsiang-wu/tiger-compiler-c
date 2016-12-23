@@ -6,12 +6,14 @@
 #include "util.h"
 
 #include "string.h"
+#include "worklist.h"
 #include <stdint.h>
 
 #define K 7 // since we add %ebp as a temp. it can be 6 + 1 =7.
 
 // descibed in P251
-Temp_tempList simplify_worklist, freeze_worklist, spill_worklist;
+// Temp_tempList simplify_worklist, freeze_worklist, spill_worklist;
+worklist_t simplify_worklist, freeze_worklist, spill_worklist;
 
 static G_nodeList coalesced_nodes;
 static G_nodeList select_stack;
@@ -28,7 +30,6 @@ static TAB_table degree_, heuristic_degree_;
 static G_graph ig_;
 
 // convert a temp to a node.
-static G_node t2n(Temp_temp temp);
 static Temp_temp n2t(G_node node);
 
 inline static Temp_temp
@@ -85,8 +86,8 @@ freeze_moves(G_node u)
     MOV_delete(&active_moves, src, dst);
     MOV_add(&frozen_moves, src, dst);
     if (!node_moves(v) && get_degree(v) < K) {
-      deletee(&freeze_worklist, n2t(v));
-      add(&simplify_worklist, n2t(v));
+      WL_delete(&freeze_worklist, n2w(v));
+      WL_add(&simplify_worklist, n2w(v));
     }
   }
 }
@@ -95,10 +96,9 @@ static void
 freeze()
 {
   assert(freeze_worklist);
-  Temp_temp u = freeze_worklist->head;
-  deletee(&freeze_worklist, u);
-  add(&spill_worklist, u);
-  freeze_moves(t2n(u));
+  worklist_t u = WL_pop(&freeze_worklist);
+  WL_add(&spill_worklist, u);
+  freeze_moves(t2n(u->t));
 }
 
 TAB_table alias_table;
@@ -170,8 +170,8 @@ static void
 add_worklist(G_node u)
 {
   if (!is_precolored(u) && !is_moverelated(u) && get_degree(u) < K) {
-    deletee(&freeze_worklist, n2t(u));
-    add(&simplify_worklist, n2t(u));
+    WL_delete(&freeze_worklist, n2w(u));
+    WL_add(&simplify_worklist, n2w(u));
   }
 }
 
@@ -179,17 +179,17 @@ static void
 combine(G_node u, G_node v)
 {
   printf("combine %d and %d\n", Temp_num(n2t(u)), Temp_num(n2t(v)));
-  if (inList(freeze_worklist, n2t(v))) {
-    deletee(&freeze_worklist, n2t(v));
+  if (WL_in(freeze_worklist, n2w(v))) {
+    WL_delete(&freeze_worklist, n2w(v));
   }
   else {
-    deletee(&spill_worklist, n2t(v));
+    WL_delete(&spill_worklist, n2w(v));
   }
   assert(!is_precolored(v));
 
   G_add(&coalesced_nodes, v);
 
-  assert(!inList(simplify_worklist, n2t(v)));
+  assert(!WL_in(simplify_worklist, n2w(v)));
   assert(!G_inlist(select_stack, v));
 
   TAB_enter(alias_table, v, u);
@@ -204,9 +204,9 @@ combine(G_node u, G_node v)
     addedge(nl->head, u);
     decre_degree(nl->head);
   }
-  if (get_degree(u) >= K && inList(freeze_worklist, n2t(u))) {
-    deletee(&freeze_worklist, n2t(u));
-    add(&spill_worklist, n2t(u));
+  if (get_degree(u) >= K && WL_in(freeze_worklist, n2w(u))) {
+    WL_delete(&freeze_worklist, n2w(u));
+    WL_add(&spill_worklist, n2w(u));
   }
 }
 
@@ -269,16 +269,16 @@ adjacent(G_node n)
 static void
 simplify()
 {
-  Temp_temp t = simplify_worklist->head;
-  G_node n = t2n(t);
-  deletee(&simplify_worklist, t);
+  worklist_t w = WL_pop(&simplify_worklist);
+  assert(w);
+  G_node n = t2n(w->t);
   push_stack(&select_stack, n);
   G_nodeList adjs = adjacent(n);
   for (; adjs; adjs = adjs->tail) {
     decre_degree(adjs->head);
   }
   printf("simplify: delete temp:");
-  Temp_print(t);
+  Temp_print(w->t);
 }
 
 static TAB_table
@@ -360,16 +360,16 @@ decre_degree(G_node n)
       printf("delete a precolored node...\n");
       return;
     }
-    deletee(&spill_worklist, n2t(n));
+    WL_delete(&spill_worklist, n2w(n));
 
     G_nodeList ns = adjacent(n);
     G_add(&ns, n);
     enable_moves(ns);
 
     if (is_moverelated(n))
-      add(&freeze_worklist, n2t(n));
+      WL_add(&freeze_worklist, n2w(n));
     else
-      add(&simplify_worklist, n2t(n));
+      WL_add(&simplify_worklist, n2w(n));
   }
 }
 
@@ -472,7 +472,7 @@ except_precolor(G_nodeList nl, Temp_tempList precolored)
 }
 
 extern TAB_table tempMap;
-static G_node
+inline G_node
 t2n(Temp_temp temp)
 {
   assert(temp);
@@ -514,37 +514,37 @@ heuristic(Temp_temp t, TAB_table degree)
 static Temp_temp
 select_spill()
 {
-  Temp_tempList tl = spill_worklist;
-  Temp_temp mintemp;
+  worklist_t wl = spill_worklist;
+  worklist_t minnode;
   double minval = -1, val;
 
   // avoid choosing from new temps
   // resulting from previously spilled
   // registers.
-  tl = except(tl, newly_created);
-  if (!tl) {
+  wl = WL_excepttl(wl, newly_created);
+  if (WL_empty(wl)) {
     // so we have to choose from them...
-    tl = newly_created;
+    WL_cattl(wl, newly_created);
     newly_created = NULL;
     // assert(0 && "I don't want to see that..");
   }
 
-  for (; tl; tl = tl->tail) {
-    val = heuristic(tl->head, heuristic_degree_);
+  for (; !WL_empty(wl); wl = wl->next) {
+    val = heuristic(wl->t, heuristic_degree_);
     if (minval < 0 || val < minval) {
-      mintemp = tl->head;
+      minnode = wl;
       minval = val;
     }
   }
-  deletee(&spill_worklist, mintemp);
-  add(&simplify_worklist, mintemp);
-  freeze_moves(t2n(mintemp));
+  WL_delete(&spill_worklist, minnode);
+  WL_add(&simplify_worklist, minnode);
+  freeze_moves(t2n(minnode->t));
 
   printf("spill ");
-  Temp_print(mintemp);
+  Temp_print(minnode->t);
   printf("value:%f\n", minval);
 
-  return mintemp;
+  return minnode->t;
 }
 
 static void
@@ -623,18 +623,20 @@ assign_colors(Temp_map initial, struct COL_result* ret)
 static void
 make_worklist(G_nodeList nl)
 {
-  simplify_worklist = freeze_worklist = spill_worklist = NULL;
+  simplify_worklist = WL_newlist();
+  freeze_worklist = WL_newlist();
+  spill_worklist = WL_newlist();
   for (; nl; nl = nl->tail) {
     if (G_degree(nl->head) >= K) {
-      add(&spill_worklist, n2t(nl->head));
+      WL_add(&spill_worklist, n2w(nl->head));
       printf("add to spill_worklist\n");
     }
     else if (is_moverelated(nl->head)) {
-      add(&freeze_worklist, n2t(nl->head));
+      WL_add(&freeze_worklist, n2w(nl->head));
       printf("add to freeze_worklist\n");
     }
     else {
-      add(&simplify_worklist, n2t(nl->head));
+      WL_add(&simplify_worklist, n2w(nl->head));
       printf("add %d to simplify_worklist\n", Temp_num(n2t(nl->head)));
     }
   }
@@ -681,41 +683,45 @@ COL_color(G_graph ig, Temp_map initial, Temp_tempList regs, Live_moveList moves)
   // your code here.
   struct COL_result ret;
 
-  // make it global
-  ig_ = ig;
-  adjset = G_Bitmatrix(ig); // construct bit matrix
+  {
+    // make it global
+    ig_ = ig;
+    adjset = G_Bitmatrix(ig); // construct bit matrix
 
-  // debug checks
-  D_check();
+    // Build table from moves.
+    move_table = MOV_Table(moves);
+    alias_table = TAB_empty();
+    worklist_moves = moves;
+    coalesced_moves = constrained_moves = frozen_moves = active_moves = NULL;
 
-  // Build table from moves.
-  move_table = MOV_Table(moves);
-  alias_table = TAB_empty();
-  worklist_moves = moves;
-  coalesced_moves = constrained_moves = frozen_moves = active_moves = NULL;
+    // After build degree table. Make nl have no pre-colored node.
+    G_nodeList nl = G_nodes(ig);
+    WL_newn2w(nl); // create nodes
 
-  // After build degree table. Make nl have no pre-colored node.
-  G_nodeList nl = G_nodes(ig);
-  build_degreetable(nl);
-  nl = except_precolor(nl, regs);
-  make_worklist(nl);
+    // debug checks
+    D_check();
 
-  // Clear all static variable
-  select_stack = coalesced_nodes = precolored_nodes = NULL;
-  for (; regs; regs = regs->tail) {
-    G_add(&precolored_nodes, t2n(regs->head));
+    build_degreetable(nl);
+    nl = except_precolor(nl, regs);
+    make_worklist(nl);
+
+    // Clear all static variable
+    select_stack = coalesced_nodes = precolored_nodes = NULL;
+    for (; regs; regs = regs->tail) {
+      G_add(&precolored_nodes, t2n(regs->head));
+    }
   }
 
   printf("coalesced_nodes:%p\n", coalesced_nodes);
-  while (simplify_worklist || worklist_moves || freeze_worklist ||
-         spill_worklist) {
-    if (simplify_worklist)
+  while (!WL_empty(simplify_worklist) || worklist_moves ||
+         !WL_empty(freeze_worklist) || !WL_empty(spill_worklist)) {
+    if (!WL_empty(simplify_worklist))
       simplify();
     else if (worklist_moves)
       coalesce();
-    else if (freeze_worklist)
+    else if (!WL_empty(freeze_worklist))
       freeze();
-    else if (spill_worklist)
+    else if (!WL_empty(spill_worklist))
       select_spill();
   }
 
