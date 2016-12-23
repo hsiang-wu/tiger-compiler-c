@@ -21,9 +21,13 @@
 //  moveList tail;
 //};
 
-bool MOV_inlist(Live_moveList, G_node src, G_node dst);
-void MOV_delete(Live_moveList*, G_node, G_node);
-void MOV_add(Live_moveList*, G_node, G_node);
+// bool MOV_inlist(Live_moveList, G_node src, G_node dst);
+// void MOV_delete(Live_moveList*, G_node, G_node);
+void MOV_addlist(Live_moveList*, G_node, G_node);
+bool MOV_inlist(Live_moveList, Live_moveList);
+void MOV_delete(Live_moveList*, Live_moveList);
+void MOV_add(Live_moveList*, Live_moveList);
+bool MOV_empty(Live_moveList);
 // bool MOV_inlist(Live_moveList, move);
 // void MOV_delete(Live_moveList*, move);
 // void MOV_add(Live_moveList*, move);
@@ -40,4 +44,5 @@ MOV_table MOV_Table(Live_moveList); // traverse movelist and build table.
 Live_moveList MOV_look(MOV_table, G_node);
 void MOV_append(MOV_table, G_node, Live_moveList);
 
+Live_moveList MOV_set();
 #endif

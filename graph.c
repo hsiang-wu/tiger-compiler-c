@@ -26,6 +26,8 @@ struct G_node_ {
   G_nodeList succs;
   G_nodeList preds;
   void* info;
+  // modify: add set identification
+  int lid;
 };
 
 G_graph
@@ -44,6 +46,11 @@ G_NodeList(G_node head, G_nodeList tail)
   G_nodeList n = (G_nodeList)checked_malloc(sizeof *n);
   n->head = head;
   n->tail = tail;
+  n->prev = NULL;
+  n->id = 0;
+  if (tail) {
+    tail->prev = n;
+  }
   return n;
 }
 
@@ -65,6 +72,7 @@ G_Node(G_graph g, void* info)
   n->succs = NULL;
   n->preds = NULL;
   n->info = info;
+  n->lid = -1;
   return n;
 }
 
@@ -230,24 +238,47 @@ G_except(G_nodeList n1, G_nodeList n2)
 
   G_nodeList r = NULL;
   for (; n1; n1 = n1->tail) {
-    if (!G_inlist(n2, n1->head)) r = G_NodeList(n1->head, r);
+    if (!G_inlist_brute(n2, n1->head)) r = G_NodeList(n1->head, r);
   }
   return r;
 }
 
+static int setcnt = 1;
+
+G_nodeList
+G_WorkList()
+{
+  G_nodeList wl = G_NodeList(NULL, NULL);
+  wl->id = setcnt++;
+  return wl;
+}
+
 void
-G_add(G_nodeList* nl, G_node n)
+G_addworklist(G_nodeList* nl, G_node n)
 {
   if (*nl) {
-    if (!G_inlist(*nl, n)) *nl = G_NodeList(n, *nl);
+    if (!G_inworklist(*nl, n)) {
+      n->lid = (*nl)->id;
+      *nl = G_NodeList(n, *nl);
+    }
   }
   else {
+    assert(0);
     *nl = G_NodeList(n, NULL);
   }
 }
 
+// different from G_inNodeList. Check identifier only
 bool
-G_inlist(G_nodeList nl, G_node n)
+G_inworklist(G_nodeList nl, G_node n)
+{
+  assert(nl); // it's a worklist!
+  return nl->head && n->lid == nl->head->lid;
+  //  inlist_brute(nl, n);
+}
+
+bool
+G_inlist_brute(G_nodeList nl, G_node n)
 {
   for (; nl; nl = nl->tail) {
     if (nl->head == n) return TRUE;
@@ -275,7 +306,7 @@ G_union(G_nodeList n1, G_nodeList n2)
 
   G_nodeList r = copylist(n1);
   for (; n2; n2 = n2->tail) {
-    if (!n1 || !G_inlist(n1, n2->head)) r = G_NodeList(n2->head, r);
+    if (!n1 || !G_inlist_brute(n1, n2->head)) r = G_NodeList(n2->head, r);
   }
 
   return r;
@@ -291,7 +322,7 @@ G_Bitmatrix(G_graph g)
       int n1 = l1->head->mykey;
       int n2 = l2->head->mykey;
       bool isadj = G_goesTo(l1->head, l2->head) || G_goesTo(l2->head, l1->head);
-      //if (isadj) printf("%d - %d", n1, n2);
+      // if (isadj) printf("%d - %d", n1, n2);
       bmenter(bm, n1, n2, isadj);
       bmenter(bm, n2, n1, isadj);
     }

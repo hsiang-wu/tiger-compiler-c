@@ -20,6 +20,10 @@ Live_MoveList(G_node src, G_node dst, Live_moveList tail)
   lm->src = src;
   lm->dst = dst;
   lm->tail = tail;
+  lm->prev = NULL;
+  if (tail) {
+    tail->prev = lm;
+  }
   return lm;
 }
 
@@ -153,7 +157,7 @@ inteferenceGraph(G_nodeList nl, G_table liveMap)
       G_node dst = (G_node)TAB_look(tempMap, defs->head);
       G_node src = (G_node)TAB_look(tempMap, srcs->head);
 
-      MOV_add(&moves, src, dst); // add to movelist
+      MOV_addlist(&moves, src, dst); // add to movelist
 
       liveouts = G_look(liveMap, nl->head);
 
@@ -171,7 +175,8 @@ inteferenceGraph(G_nodeList nl, G_table liveMap)
 
         G_addEdge(dst, t);
       }
-    } else { // i->kind == I_OPER
+    }
+    else { // i->kind == I_OPER
 
       printInsNode(G_nodeInfo(nl->head)); // FG
 
@@ -220,7 +225,7 @@ Live_liveness(G_graph flow)
   G_table out = G_empty();
   createInOutTable(flow, in, out); /* solution of data-flow */
 
-  moves = NULL;
+  moves = MOV_set();
   G_graph g = inteferenceGraph(G_nodes(flow), out); // from out
   lg.graph = g;
   lg.moves = moves;

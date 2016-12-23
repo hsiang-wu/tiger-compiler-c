@@ -24,7 +24,8 @@ WL_newnode(Temp_temp temp)
 void
 WL_delete(worklist_t* head, worklist_t node)
 {
-  assert(*head && (*head)->t);
+  assert(*head);
+   assert( (*head)->t);
   assert(!(*head)->prev); // is it really head?
   if ((*head)->lid != node->lid) {
     //    assert(0);
@@ -122,6 +123,7 @@ WL_excepttl(worklist_t w1, Temp_tempList tl)
   for (; tl; tl = tl->tail) {
     if (WL_in(w1, t2w(tl->head))) WL_delete(&w1, t2w(tl->head));
   }
+  return w1;
 }
 
 worklist_t
@@ -130,4 +132,5 @@ WL_cattl(worklist_t w1, Temp_tempList tl)
   for (; tl; tl = tl->tail) {
     if (!WL_in(w1, t2w(tl->head))) WL_add(&w1, t2w(tl->head));
   }
+  return w1;
 }

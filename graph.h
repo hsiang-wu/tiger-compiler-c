@@ -13,6 +13,8 @@ typedef struct G_nodeList_* G_nodeList;
 struct G_nodeList_ {
     G_node head;
     G_nodeList tail;
+    G_nodeList prev;
+    int id;
 };
 
 /* Make a new graph */
@@ -72,13 +74,16 @@ void* G_look(G_table t, G_node node);
 
 G_nodeList G_except(G_nodeList n1, G_nodeList n2);
 G_nodeList G_union(G_nodeList n1, G_nodeList n2);
-bool G_inlist(G_nodeList nl, G_node n);
-void G_add(G_nodeList* nl, G_node n);
+bool G_inworklist(G_nodeList nl, G_node n);
+void G_addworklist(G_nodeList* nl, G_node n);
 
 typedef U_bmat G_bmat;
 // coalesce: construct a bit matrix from G_graph
 G_bmat G_Bitmatrix(G_graph);
 bool G_bmlook(G_bmat, G_node, G_node);
 void G_bmenter(G_bmat, G_node, G_node, bool v);
+
+bool G_inlist_brute(G_nodeList nl, G_node n);
+G_nodeList G_WorkList();
 
 #endif

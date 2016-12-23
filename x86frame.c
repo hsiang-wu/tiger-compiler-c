@@ -225,7 +225,7 @@ F_procEntryExit1(F_frame frame, T_stm stm)
   // But don't have time in the lab...Maybe for someone with
   // further interest?
   // bool tostack = FALSE;
-  bool tostack = TRUE;
+  bool tostack = FALSE;
 
   F_access f_ebx = F_allocLocal(frame, tostack); // place callee-save registers
   F_access f_esi = F_allocLocal(frame, tostack); // place callee-save registers
