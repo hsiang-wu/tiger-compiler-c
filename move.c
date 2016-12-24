@@ -1,11 +1,11 @@
 #include "move.h"
 
 #include "temp.h"
-static Live_moveList copylist(Live_moveList m);
-static void MOV_enter(MOV_table mt, G_node n, Live_moveList ml);
+static moveList copylist(moveList m);
+static void MOV_enter(MOV_table mt, G_node n, moveList ml);
 
 bool
-MOV_inlist_brute(Live_moveList ml, G_node src, G_node dst)
+MOV_inlist_brute(moveList ml, G_node src, G_node dst)
 {
   for (; ml; ml = ml->tail) {
     if (ml->src == src && ml->dst == dst) {
@@ -15,12 +15,36 @@ MOV_inlist_brute(Live_moveList ml, G_node src, G_node dst)
   return FALSE;
 }
 
+move
+MOV_Move(G_node src, G_node dst, int i)
+{
+  move m = checked_malloc(sizeof(*m));
+  m->src = src;
+  m->dst = dst;
+  m->sid = i;
+  return m;
+}
+
+moveList
+MOV_MoveList(move m, moveList tail, int i)
+{
+  moveList ml = checked_malloc(sizeof(*ml));
+  ml->head = m;
+  ml->tail = tail;
+  ml->prev = NULL;
+  if (tail) {
+    tail->prev = ml;
+  }
+  ml->sid = i;
+  return ml;
+}
+
 /*
 void
-MOV_delete(Live_moveList* pm, G_node src, G_node dst)
+MOV_delete(moveList* pm, G_node src, G_node dst)
 {
   assert(MOV_inlist(*pm, src, dst));
-  Live_moveList ml, last;
+  moveList ml, last;
   ml = *pm;
   last = NULL;
   for (; ml; ml = ml->tail) {
@@ -36,19 +60,19 @@ MOV_delete(Live_moveList* pm, G_node src, G_node dst)
 }
 
 void
-MOV_add(Live_moveList* pm, G_node src, G_node dst)
+MOV_add(moveList* pm, G_node src, G_node dst)
 {
   if (!MOV_inlist(*pm, src, dst)) *pm = Live_MoveList(src, dst, *pm);
 }
 */
 
-Live_moveList
-MOV_intersection(Live_moveList m1, Live_moveList m2)
+moveList
+MOV_intersection(moveList m1, moveList m2)
 {
   printf("move intersection\n");
   if (!m1) return NULL;
 
-  Live_moveList r = NULL;
+  moveList r = NULL;
   for (; m2; m2 = m2->tail) {
     if (MOV_inlist_brute(m1, m2->src, m2->dst)) {
       r = Live_MoveList(m2->src, m2->dst, r);
@@ -58,10 +82,10 @@ MOV_intersection(Live_moveList m1, Live_moveList m2)
   return r;
 }
 
-static Live_moveList
-copylist(Live_moveList m)
+static moveList
+copylist(moveList m)
 {
-  Live_moveList tl = NULL, hd = NULL;
+  moveList tl = NULL, hd = NULL;
   for (; m; m = m->tail) {
     if (!tl) {
       hd = tl = Live_MoveList(m->src, m->dst, NULL);
@@ -73,12 +97,12 @@ copylist(Live_moveList m)
   return hd;
 }
 
-Live_moveList
-MOV_union(Live_moveList m1, Live_moveList m2)
+moveList
+MOV_union(moveList m1, moveList m2)
 {
   if (!m1) return copylist(m2);
 
-  Live_moveList r = copylist(m1);
+  moveList r = copylist(m1);
   for (; m2; m2 = m2->tail) {
     if (!m1 || !MOV_inlist_brute(m1, m2->src, m2->dst))
       r = Live_MoveList(m2->src, m2->dst, r);
@@ -96,7 +120,7 @@ show(void* key, void* value)
 
 // name for moveList in book.
 // A mapping from a node to the list of moves it is associated with.
-MOV_table MOV_Table(Live_moveList ml) // traverse movelist and build table.
+MOV_table MOV_Table(moveList ml) // traverse movelist and build table.
 {
   G_node src, dst;
   MOV_table mt = TAB_empty();
@@ -115,14 +139,14 @@ MOV_table MOV_Table(Live_moveList ml) // traverse movelist and build table.
 }
 
 // caller must call init_map() first
-Live_moveList
+moveList
 MOV_look(MOV_table mt, G_node n)
 {
   return TAB_look(mt, n);
 }
 
 static void
-mt_enter(MOV_table mt, G_node n, Live_moveList ml)
+mt_enter(MOV_table mt, G_node n, moveList ml)
 {
   TAB_enter(mt, n, ml);
 }
@@ -130,15 +154,15 @@ mt_enter(MOV_table mt, G_node n, Live_moveList ml)
 static void
 mt_add(MOV_table mt, G_node n, G_node src, G_node dst)
 {
-  Live_moveList newml = Live_MoveList(src, dst, MOV_look(mt, n));
+  moveList newml = Live_MoveList(src, dst, MOV_look(mt, n));
   mt_enter(mt, n, newml);
 }
 
 void
-MOV_append(MOV_table mt, G_node n, Live_moveList m2)
+MOV_append(MOV_table mt, G_node n, moveList m2)
 {
-  Live_moveList m1 = MOV_look(mt, n);
-  Live_moveList hd = m1;
+  moveList m1 = MOV_look(mt, n);
+  moveList hd = m1;
   if (!m1) {
     mt_enter(mt, n, m2);
     return;
@@ -155,26 +179,25 @@ MOV_append(MOV_table mt, G_node n, Live_moveList m2)
 //
 //
 static int cnt = 0;
-Live_moveList
+moveList
 MOV_set()
 {
-  Live_moveList empty = Live_MoveList(NULL, NULL, NULL);
-  empty->id = cnt++;
+  moveList empty = MOV_MoveList(NULL, NULL, cnt++);
   return empty;
 }
 
 bool
-MOV_inlist(Live_moveList m1, Live_moveList m2)
+MOV_inlist(moveList m1, move m2)
 {
-  return m1->id == m2->id;
+  return m1->sid == m2->sid;
 }
 
 void
-MOV_delete(Live_moveList* l, Live_moveList m)
+MOV_delete(moveList* l, move m)
 {
   assert(MOV_inlist(*l, m));
-  m->id = -1;
-  if (*l == m) {
+  m->sid = -1;
+  if ((*l)->head == m) {
     *l = (*l)->tail;
     (*l)->prev = NULL;
   }
@@ -186,7 +209,7 @@ MOV_delete(Live_moveList* l, Live_moveList m)
 }
 
 void
-MOV_add(Live_moveList* l, Live_moveList m)
+MOV_add(moveList* l, move m)
 {
   if (!MOV_inlist(*l, m)) {
     m->id = (*l)->id;
@@ -195,15 +218,15 @@ MOV_add(Live_moveList* l, Live_moveList m)
 }
 
 void
-MOV_addlist(Live_moveList* l, G_node src, G_node dst)
+MOV_addlist(moveList* l, G_node src, G_node dst)
 {
-  Live_moveList newnode = Live_MoveList(src, dst, *l);
+  moveList newnode = Live_MoveList(src, dst, *l);
   newnode->id = (*l)->id;
   *l = newnode;
 }
 
 bool
-MOV_empty(Live_moveList m)
+MOV_empty(moveList m)
 {
   assert(!m->src == !m->dst);
   return !m->src;
