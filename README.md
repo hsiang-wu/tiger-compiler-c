@@ -1,8 +1,8 @@
-# TCTC: a Tiger Compiler That Compiles
+# TCTCTC: The C Tiger Compiler That Compiles
 
 ## Introduction
 
- Follow the instruction of *Modern Compiler implementation in C*, finish the the program part of chapter 12 (as a course lab). Unlike many tiger compilers you can found on github, this tiger compiler COMPILES.
+ Follow the instruction of *Modern Compiler implementation in C*, finish the the program part of chapter 12 (as a course lab). Unlike many tiger compilers you can found on github, TCTCTC(**hereafter referred as TCTC**) implements **back-end** and **compiles**.
 
 ### This project includes:
 
