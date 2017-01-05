@@ -41,36 +41,36 @@ TCTC should compiles in linux. (at least all the testcases in linux)
 
 1. Compile TCTC. You must have `lex` and `bison`(or `yacc`) installed.
 
-```
-make
-```
+ ```
+ make
+ ```
 
 2. Use TCTC to compile a tiger program. There are some examples in `testcase/`
 
-```
-./a.out <program>
-```
+ ```
+ ./a.out <program>
+ ```
 
-Assembly <program>.s will be generated.
+ Assembly <program>.s will be generated.
 
 3. Link
 
-For gcc,
+ For gcc,
 
-```
-gcc -Wl,--wrap,getchar -m32 <assembly> runtime.c -o <binary>
-```
+ ```
+ gcc -Wl,--wrap,getchar -m32 <assembly> runtime.c -o <binary>
+ ```
 
-For clang it *might be*: (can't find clang equivalence for `--wrap`...)
+ For clang it *might be*: (can't find clang equivalence for `--wrap`...)
 
-```
-clang -m32 <assembly> runtime.c -o <binary>
-```
+ ```
+ clang -m32 <assembly> runtime.c -o <binary>
+ ```
 
 4. Run
 
-```
-./<binary>
-```
+ ```
+ ./<binary>
+ ```
 
 
