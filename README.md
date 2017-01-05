@@ -2,9 +2,9 @@
 
 ## Introduction
 
-* Follow the instruction of *Modern Compiler implementation in C*, finish the the program part of chapter 12 (as a course lab). Unlike many tiger compilers you can found on github, this tiger compiler COMPILES.
+ Follow the instruction of *Modern Compiler implementation in C*, finish the the program part of chapter 12 (as a course lab). Unlike many tiger compilers you can found on github, this tiger compiler COMPILES.
 
-* This project includes:
+### This project includes:
 
 - Lexical Analysis (ch 2)
 - Parsing (ch 3)
@@ -18,7 +18,7 @@
 - Flowgraph and Liveness (ch 10)
 - Coloring, **including spilling and coalescing**. (ch 11)
 
-* This work can be improved by:
+### This work can be improved by:
 
 - Make the compiler support macOS & clang linker (currently TCTC can compile a few programs like *queens.tig* on macOS...orz) or other platforms and frames.
 
@@ -32,7 +32,7 @@
 
 - Write scipts for compile and link into binary.
 
-* Maybe there are bugs in:
+### Maybe there are bugs in:
 - Spilling. When we enable callee-save registers to be moved into temp first and spill them later if necessary, there's infinite spilling for some testcase. Modify x86fram.c to see it...
 
 ## Usage
