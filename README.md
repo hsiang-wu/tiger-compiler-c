@@ -61,11 +61,10 @@ TCTC should compiles in linux. (at least all the testcases in linux)
  gcc -Wl,--wrap,getchar -m32 <assembly> runtime.c -o <binary>
  ```
 
- For clang it *might be*: (can't find clang equivalence for `--wrap`...)
+For clang: 
 
- ```
- clang -m32 <assembly> runtime.c -o <binary>
- ```
+(Can't find clang equivalence for `--wrap`, so it doesn't work when tiger source calls `getchar()`. If a workaround is found, please issue.)
+
 
 4. Run
 
